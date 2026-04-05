@@ -137,15 +137,15 @@
 
         <!-- Listing Form -->
         <section id="post-listing" style="margin-bottom: 6rem;">
-            <div class="ride-card">
-                <h2 style="margin-bottom: 1.5rem; text-decoration: underline;">Post Your Listing 📋</h2>
+            <div class="welcome-card sketch-border" style="max-width: 600px; margin: 0 auto; padding: 2.5rem;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 1.5rem; text-align: center;">Create / Find Match ✏️</h2>
                 <form id="postingForm">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <div class="input-group">
-                            <label>Full Name</label>
-                            <input type="text" id="studentName" placeholder="e.g. Alex" required>
-                        </div>
-                        <div class="flex-row-mobile-stack" style="display: flex; gap: 1rem;">
+                    <div class="input-group" style="margin-bottom: 2rem;">
+                        <label>Full Name</label>
+                        <input type="text" id="studentName" placeholder="e.g. Alex" required>
+                    </div>
+                    
+                    <div class="flex-row-mobile-stack" style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
                         <div class="input-group" style="flex: 1;">
                             <label>Date of Ride</label>
                             <input type="date" id="rideDate" required>
@@ -155,12 +155,11 @@
                             <input type="time" id="departureTime" required>
                         </div>
                     </div>
-                    </div>
 
-                    <div class="input-group">
+                    <div class="input-group" style="margin-bottom: 2rem;">
                         <label>Destination</label>
                         <div id="quick-airports"
-                            style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            style="display: flex; gap: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap;">
                             <span id="quick-loader" style="font-size: 0.8rem; color: #888;">Finding nearby
                                 airports...</span>
                         </div>
@@ -168,12 +167,12 @@
                             required>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group" style="margin-bottom: 2.5rem;">
                         <label>Max Riders Allowed</label>
                         <input type="number" id="maxRiders" min="2" max="8" placeholder="e.g. 4" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Find or Create Match</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 15px;">Find or Create Match ✨</button>
                 </form>
             </div>
         </section>
