@@ -6,8 +6,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;700&family=Indie+Flower&display=swap');
 
 :root {
-  --paper-bg: #fdfdfd;
-  --paper-texture: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png');
+  --paper-bg: #f8f6f0; /* Off-white notebook color */
+  --paper-texture: none; /* Removed pinstripes */
   --pencil: #333333;
   --pen-blue: #2a5298;
   --crayon-red: #ff4757;
