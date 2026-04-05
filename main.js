@@ -107,7 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
             try {
-                const res = await fetch(`https://universities.hipo.co/search?name=${encodeURIComponent(val)}`);
+                // Using hipolabs.com (the API server does not support https, so it's http)
+                const res = await fetch(`http://universities.hipolabs.com/search?name=${encodeURIComponent(val)}`);
                 const data = await res.json();
                 
                 uniSuggestions.innerHTML = '';
