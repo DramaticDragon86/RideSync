@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Data Store (Simulated)
-    let rides = [
+    // 1. Data Store (with LocalStorage persistence)
+    const STORAGE_KEY = 'ridesync_active_postings';
+    
+    // Initial data if storage is empty
+    const defaultRides = [
         {
             id: 1,
             name: "Alex Johnson",
@@ -21,54 +24,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    let rides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultRides;
+
     const ridesGrid = document.getElementById('ridesGrid');
     const rideCountEl = document.getElementById('rideCount');
     const postingForm = document.getElementById('postingForm');
     const noRides = document.getElementById('noRides');
 
+    function saveRides() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rides));
+    }
+
     // 2. Render Rides
     function renderRides() {
-        if (rides.length === 0) {
-            noRides.style.display = 'block';
-        } else {
-            noRides.style.display = 'none';
-        }
+        if (!ridesGrid) return;
 
         ridesGrid.innerHTML = '';
-        if (rides.length > 0) ridesGrid.appendChild(noRides); // Keep reference but hide
-
-        rides.forEach(ride => {
-            const splitFare = (ride.baseFare / ride.riders).toFixed(2);
+        if (rides.length === 0) {
+            noRides.style.display = 'block';
+            ridesGrid.appendChild(noRides);
+        } else {
+            noRides.style.display = 'none';
+            ridesGrid.appendChild(noRides); // Hidden ref
             
-            const card = document.createElement('div');
-            card.className = 'ride-card';
-            card.innerHTML = `
-                <div class="ride-header">
-                    <div class="student-info">
-                        <h4>${ride.name}</h4>
-                        <span>University Student</span>
-                    </div>
-                    <div class="ride-time"><i class="fa-regular fa-clock"></i> ${ride.time}</div>
-                </div>
+            rides.forEach(ride => {
+                const splitFare = (ride.baseFare / ride.riders).toFixed(2);
                 
-                <div class="ride-route">
-                    <div class="route-point">From: <strong>${ride.start}</strong></div>
-                    <div class="route-point destination">To: <strong>${ride.end}</strong></div>
-                </div>
-
-                <div class="fare-box">
-                    <div class="split-stats">
-                        <label>Your Split Estimate</label>
-                        <div class="amount">$${splitFare}</div>
-                        <div class="riders-count">${ride.riders} ${ride.riders === 1 ? 'Person' : 'People'} synced</div>
+                const card = document.createElement('div');
+                card.className = 'ride-card';
+                card.innerHTML = `
+                    <div class="ride-header">
+                        <div class="student-info">
+                            <h4>${ride.name}</h4>
+                            <span>University Student</span>
+                        </div>
+                        <div class="ride-time"><i class="fa-regular fa-clock"></i> ${ride.time}</div>
                     </div>
-                    <button class="join-btn ${ride.riders >= 4 ? 'full' : ''}" onclick="window.joinRide(${ride.id})">
-                        ${ride.riders >= 4 ? 'Full' : '<i class="fa-solid fa-plus"></i> Join'}
-                    </button>
-                </div>
-            `;
-            ridesGrid.appendChild(card);
-        });
+                    
+                    <div class="ride-route">
+                        <div class="route-point">From: <strong>${ride.start}</strong></div>
+                        <div class="route-point destination">To: <strong>${ride.end}</strong></div>
+                    </div>
+
+                    <div class="fare-box">
+                        <div class="split-stats">
+                            <label>Your Split Estimate</label>
+                            <div class="amount">$${splitFare}</div>
+                            <div class="riders-count">${ride.riders} ${ride.riders === 1 ? 'Person' : 'People'} synced</div>
+                        </div>
+                        <button class="join-btn ${ride.riders >= 4 ? 'full' : ''}" onclick="window.joinRide(${ride.id})">
+                            ${ride.riders >= 4 ? 'Full' : '<i class="fa-solid fa-plus"></i> Join'}
+                        </button>
+                    </div>
+                `;
+                ridesGrid.appendChild(card);
+            });
+        }
 
         rideCountEl.textContent = rides.length;
     }
@@ -89,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             rides.unshift(newRide);
+            saveRides();
             renderRides();
             postingForm.reset();
             
@@ -114,13 +126,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const ride = rides.find(r => r.id === id);
         if (ride && ride.riders < 4) {
             ride.riders++;
+            saveRides();
             renderRides();
-            
-            // Subtle toast or feedback could be added here
         } else if (ride && ride.riders >= 4) {
             alert("This ride is currently full!");
         }
     };
+
+    // 5. Cross-Tab Synchronization
+    window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY) {
+            rides = JSON.parse(e.newValue);
+            renderRides();
+        }
+    });
 
     // Initial Render
     renderRides();
