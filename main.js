@@ -231,40 +231,65 @@ document.addEventListener('DOMContentLoaded', () => {
     async function findNearbyAirports(lat, lon) {
         try {
             const queryStr = `[out:json];node["aeroway"="aerodrome"](around:70000, ${lat}, ${lon});out;`;
-            const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: queryStr });
-            const data = await res.json();
-            const airports = data.elements.map(el => el.tags.name).filter(n => n);
+            let res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: queryStr });
+            let data = await res.json();
             
-            airportList.innerHTML = '';
-            airports.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                airportList.appendChild(opt);
-            });
+            // Get aerodromes that have 'airport' or 'international' in the name
+            let airports = data.elements.map(el => el.tags.name).filter(n => n && (n.toLowerCase().includes('airport') || n.toLowerCase().includes('international')));
+            
+            // Fallback if none found with strict filters
+            if (airports.length === 0) {
+                 airports = data.elements.map(el => el.tags.name).filter(n => n);
+            }
+            
+            const uniqueAirports = [...new Set(airports)].slice(0, 2);
+            
+            const quickContainer = document.getElementById('quick-airports');
+            const endLocInput = document.getElementById('endLoc');
+            
+            if (quickContainer) {
+                quickContainer.innerHTML = ''; // Clear loader
+                
+                uniqueAirports.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-secondary';
+                    btn.style.padding = '5px 10px';
+                    btn.style.fontSize = '0.9rem';
+                    btn.style.marginRight = '0.5rem';
+                    btn.textContent = name;
+                    btn.onclick = () => {
+                        Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
+                        btn.style.backgroundColor = '#f0f0f0';
+                        endLocInput.value = name;
+                        endLocInput.style.display = 'none';
+                    };
+                    quickContainer.appendChild(btn);
+                });
+                
+                // Add Other button
+                const otherBtn = document.createElement('button');
+                otherBtn.type = 'button';
+                otherBtn.className = 'btn';
+                otherBtn.style.padding = '5px 10px';
+                otherBtn.style.fontSize = '0.9rem';
+                otherBtn.textContent = 'Other';
+                otherBtn.onclick = () => {
+                   Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
+                   otherBtn.style.backgroundColor = '#f0f0f0';
+                   endLocInput.value = '';
+                   endLocInput.style.display = 'block';
+                };
+                quickContainer.appendChild(otherBtn);
+                
+                // Select first by default if exists
+                if (uniqueAirports.length > 0) {
+                    quickContainer.children[0].click();
+                } else {
+                    otherBtn.click();
+                }
+            }
         } catch(e) { console.warn("Failed to get airports"); }
-    }
-
-    // 🚀 2. Finalize Entry
-    function enterPortal() {
-        verificationPage.style.display = 'none';
-        mainApp.style.display = 'block';
-        uniBadge.textContent = `📍 verified at ${currentUniversity}`;
-        
-        syncRidesForUniversity();
-    }
-
-    async function findNearbyAirports(lat, lon) {
-        const queryStr = `[out:json];node["aeroway"="aerodrome"](around:70000, ${lat}, ${lon});out;`;
-        const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: queryStr });
-        const data = await res.json();
-        const airports = data.elements.map(el => el.tags.name).filter(n => n);
-        
-        airportList.innerHTML = '';
-        airports.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            airportList.appendChild(opt);
-        });
     }
 
     // 🚀 2. Finalize Entry
