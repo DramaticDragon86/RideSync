@@ -98,27 +98,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualSearchInput = document.getElementById('manualUniSearch');
     const uniSuggestions = document.getElementById('uni-suggestions');
 
-    // Live University Search (Regulated Selection)
+    // Live University Search (Regulated Selection via HTTPS GitHub Raw)
     let searchTimeout = null;
+    let universityDataCache = null;
+
     manualSearchInput.addEventListener('input', () => {
-        const val = manualSearchInput.value;
+        const val = manualSearchInput.value.toLowerCase();
         if (val.length < 3) return;
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
             try {
-                // Using hipolabs.com (the API server does not support https, so it's http)
-                const res = await fetch(`http://universities.hipolabs.com/search?name=${encodeURIComponent(val)}`);
-                const data = await res.json();
+                // Fetch the full list once (HTTPS safe, no Mixed Content)
+                if (!universityDataCache) {
+                    const res = await fetch('https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json');
+                    universityDataCache = await res.json();
+                }
+                
+                // Filter locally
+                const matches = universityDataCache.filter(uni => uni.name.toLowerCase().includes(val)).slice(0, 10);
                 
                 uniSuggestions.innerHTML = '';
-                data.slice(0, 10).forEach(uni => {
+                matches.forEach(uni => {
                     const opt = document.createElement('option');
                     opt.value = uni.name;
                     uniSuggestions.appendChild(opt);
                 });
-            } catch (e) { console.warn("Uni search fail:", e); }
-        }, 500);
+            } catch (e) { console.warn("Uni search cache fail:", e); }
+        }, 300);
     });
 
     document.getElementById('confirm-uni-btn').addEventListener('click', enterPortal);
