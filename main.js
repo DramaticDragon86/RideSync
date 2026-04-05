@@ -296,16 +296,26 @@ document.addEventListener('DOMContentLoaded', () => {
         syncRidesForUniversity();
     }
 
-    // 📋 3. Sync Rides (Cloud + Robust Filter)
+    // 📋 3. Sync Rides (Cloud + Auto-Match View)
     function syncRidesForUniversity() {
         const ridesRef = collection(db, "rides");
         
+        // Only load rides that the current user is a passenger in
         const q = query(ridesRef, orderBy("createdAt", "desc"));
 
         onSnapshot(q, (snapshot) => {
             const allRides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const filteredRides = allRides.filter(ride => ride.university === currentUniversity);
-            renderRides(filteredRides);
+            
+            // Client-side filtering ensures it works without complex indexing 
+            // and filters out anything the user isn't assigned to.
+            const userUid = auth.currentUser ? auth.currentUser.uid : null;
+            const myRides = allRides.filter(ride => 
+                ride.university === currentUniversity && 
+                ride.passengers && 
+                ride.passengers.includes(userUid)
+            );
+            
+            renderRides(myRides);
         }, (error) => {
             console.error("Firebase sync error:", error);
             alert("Database Error! Make sure you initialized Firestore in your console.");
@@ -319,15 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             noRides.style.display = 'none';
             data.forEach(ride => {
-                const splitFare = (ride.baseFare / ride.riders).toFixed(2);
                 const card = document.createElement('div');
                 card.className = 'ride-card';
                 card.innerHTML = `
                     <div class="ride-header">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
-                                <h3 style="font-size: 1.5rem; text-decoration: underline;">Ride with ${ride.name}</h3>
-                                <p style="font-family: var(--font-accent);">Posted for ${ride.university}</p>
+                                <h3 style="font-size: 1.5rem; text-decoration: underline;">Matched Carpool</h3>
+                                <p style="font-family: var(--font-accent);">${ride.date} • heading to ${ride.end}</p>
                             </div>
                             <span style="background: #f0f0f0; padding: 5px 10px; border-radius: 5px; font-weight: bold;">
                                 <i class="fa-regular fa-clock"></i> ${ride.time}
@@ -336,18 +345,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     
                     <div style="margin: 1rem 0;">
-                        <p><strong>Heading to:</strong> ${ride.end}</p>
+                        <p><strong>Passengers (${ride.currentRiders}/${ride.maxRiders}):</strong></p>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            ${ride.passengerNames ? ride.passengerNames.map(name => `<li>${name}</li>`).join('') : ''}
+                        </ul>
                     </div>
 
-                    <div class="fare-box">
-                        <div>
-                            <p style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">Est. Split Fare</p>
-                            <h2 style="color: var(--crayon-red); font-size: 2rem;">$${splitFare}</h2>
-                            <p style="font-size: 0.7rem; color: #555;">${ride.riders} people on this trip</p>
-                        </div>
-                        <button class="btn btn-primary" onclick="window.joinRide('${ride.id}')" style="padding: 10px 20px;">
-                            ${ride.riders >= 4 ? 'Full 📋' : 'Join Ride ✏️'}
-                        </button>
+                    <div class="fare-box" style="justify-content: center; background: #e8f5e9;">
+                        <p style="font-size: 1rem; color: #2e7d32; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> You are secured in this ride!</p>
                     </div>
                 `;
                 ridesGrid.appendChild(card);
@@ -355,22 +360,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 📝 4. Post New Listing
+    // 📝 4. Find or Create Matching Listing
     if (postingForm) {
         postingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const payload = {
-                name: document.getElementById('studentName').value,
-                end: document.getElementById('endLoc').value,
-                time: document.getElementById('departureTime').value,
-                baseFare: parseFloat(document.getElementById('baseFare').value),
-                riders: 1,
-                university: currentUniversity,
-                createdAt: Date.now()
-            };
-
+            
+            const myName = document.getElementById('studentName').value;
+            const endVal = document.getElementById('endLoc').value;
+            const dateVal = document.getElementById('rideDate').value;
+            const timeVal = document.getElementById('departureTime').value;
+            const maxRidersVal = parseInt(document.getElementById('maxRiders').value);
+            const userUid = auth.currentUser.uid;
+            
             try {
-                await addDoc(collection(db, "rides"), payload);
+                // AUTO MATCH LOGIC
+                const ridesRef = collection(db, "rides");
+                const q = query(ridesRef, orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                let matchedRide = null;
+                
+                // Helper to convert HH:MM to minutes from midnight
+                const toMinutes = (tStr) => {
+                    const parts = tStr.split(':');
+                    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                };
+                const myMins = toMinutes(timeVal);
+                
+                querySnapshot.forEach(docSnap => {
+                    const ride = docSnap.data();
+                    
+                    // Filter matching rides locally
+                    const isSameUni = ride.university === currentUniversity;
+                    const isSameEnd = ride.end === endVal;
+                    const isSameDate = ride.date === dateVal;
+                    const isNotFull = ride.currentRiders < ride.maxRiders;
+                    const imNotAlreadyInit = !(ride.passengers || []).includes(userUid);
+                    
+                    if (isSameUni && isSameEnd && isSameDate && isNotFull && imNotAlreadyInit) {
+                        const rideMins = toMinutes(ride.time);
+                        // Within 30 minutes?
+                        if (Math.abs(rideMins - myMins) <= 30) {
+                            if (!matchedRide) {
+                                matchedRide = { id: docSnap.id, ...ride, minsGap: Math.abs(rideMins - myMins) };
+                            } else if (Math.abs(rideMins - myMins) < matchedRide.minsGap) {
+                                // Prefer the closely matching time
+                                matchedRide = { id: docSnap.id, ...ride, minsGap: Math.abs(rideMins - myMins) };
+                            }
+                        }
+                    }
+                });
+                
+                if (matchedRide) {
+                    // Update existing document!
+                    const matchRef = doc(db, "rides", matchedRide.id);
+                    await updateDoc(matchRef, {
+                        currentRiders: increment(1),
+                        passengers: arrayUnion(userUid),
+                        passengerNames: arrayUnion(myName)
+                    });
+                    alert("Match Found! You have been automatically added to a carpool heading there at roughly the same time!");
+                } else {
+                    // Create new request since no match was found
+                    const payload = {
+                        university: currentUniversity,
+                        end: endVal,
+                        date: dateVal,
+                        time: timeVal,
+                        maxRiders: maxRidersVal,
+                        currentRiders: 1,
+                        passengers: [userUid],
+                        passengerNames: [myName],
+                        createdAt: Date.now()
+                    };
+                    await addDoc(ridesRef, payload);
+                    alert("Request Submitted! We didn't find an exact match within 30 minutes, but we created a new listing for others to auto-match with you.");
+                }
+
                 postingForm.reset();
                 
                 const quickAirports = document.getElementById('quick-airports');
@@ -380,18 +446,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 window.scrollTo({ top: ridesGrid.offsetTop - 100, behavior: 'smooth' });
             } catch (err) {
-                alert("Error Posting Sketch: " + err.message);
+                alert("Error Posting Request: " + err.message);
+                console.error(err);
             }
         });
     }
 
-    // 🤝 5. Join Logic
-    window.joinRide = async (id) => {
-        const rideRef = doc(db, "rides", id);
-        try {
-            await updateDoc(rideRef, { riders: increment(1) });
-        } catch (err) {
-            console.error("Join error:", err);
-        }
-    };
+    // Join logic is removed since it's auto-matched
 });
