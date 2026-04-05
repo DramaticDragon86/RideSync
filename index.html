@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="RideSync - The future of seamless transportation. Book, track, and sync your rides with ease.">
+    <title>RideSync | Modern Transportation Orchestration</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2300e5ff%22/><text y=%22.9em%22 font-size=%2280%22 x=%22.1em%22 font-family=%22serif%22 fill=%22%230a0a0c%22>R</text></svg>">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="bg-overlay"></div>
+    <div class="sphere sphere-1"></div>
+    <div class="sphere sphere-2"></div>
+
+    <div class="container">
+        <nav>
+            <a href="#" class="logo">
+                <i>R</i> RideSync
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#booking">Book Now</a>
+                <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" class="github-link">
+                    <i class="fa-brands fa-github"></i> Repository
+                </a>
+            </div>
+            <a href="#booking" class="btn btn-secondary">Get Started</a>
+        </nav>
+
+        <header class="hero">
+            <div class="hero-content">
+                <h1>Seamless Movement, Defined.</h1>
+                <p>Experience the next generation of transportation. RideSync connects you to your destination with precision, speed, and absolute comfort.</p>
+                <div class="hero-btns" style="display: flex; gap: 1rem;">
+                    <a href="#booking" class="btn btn-primary">Book Your First Ride</a>
+                    <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" class="btn btn-secondary">
+                        <i class="fa-brands fa-github"></i> View Source
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/hero.png" alt="Futuristic RideSync Car">
+            </div>
+        </header>
+
+        <section id="features" class="features">
+            <div class="feature-card">
+                <i class="fa-solid fa-bolt-lightning"></i>
+                <h3>Instant Sync</h3>
+                <p>Connect your calendar and let RideSync handle the logistics. Your ride is ready when you are.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h3>Precision Safety</h3>
+                <p>Advanced telemetry and AI monitoring ensure every journey is as secure as it is smooth.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-earth-americas"></i>
+                <h3>Global Range</h3>
+                <p>Available in major cities worldwide, providing the same premium experience across borders.</p>
+            </div>
+        </section>
+
+        <section id="booking" class="booking-section">
+            <h2 style="font-size: 2.5rem; margin-bottom: 3rem;">Ready to Sync?</h2>
+            <div class="booking-card">
+                <form class="booking-form" id="bookingForm">
+                    <div class="input-group">
+                        <label for="pickup">Pickup Location</label>
+                        <input type="text" id="pickup" placeholder="Where are you?" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" placeholder="Where are we going?" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="time">Time</label>
+                        <input type="time" id="time" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; border: none; cursor: pointer;">
+                        Reserve Ride
+                    </button>
+                </form>
+                <div id="bookingSuccess" style="display: none; padding: 2rem; color: var(--primary);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <h3>Ride Synced!</h3>
+                    <p style="margin-top: 0.5rem;">Your driver will arrive at the scheduled time.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="logo" style="font-size: 1rem;">
+                <i>R</i> RideSync
+            </div>
+            <div class="footer-links">
+                &copy; 2026 RideSync Technologies. Built for Excellence.
+            </div>
+            <div class="socials" style="display: flex; gap: 1rem;">
+                <a href="https://github.com/DramaticDragon86/RideSync" class="nav-links" target="_blank" style="font-size: 1.2rem;">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
