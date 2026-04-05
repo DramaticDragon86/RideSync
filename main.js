@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where, setDoc, getDoc, getDocs, arrayUnion 
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where, setDoc, getDoc, getDocs, arrayUnion, arrayRemove, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut 
@@ -351,8 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </ul>
                     </div>
 
-                    <div class="fare-box" style="justify-content: center; background: #e8f5e9;">
+                    <div class="fare-box" style="justify-content: space-between; align-items: center; background: #e8f5e9;">
                         <p style="font-size: 1rem; color: #2e7d32; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> You are secured in this ride!</p>
+                        <button class="btn btn-secondary" onclick="window.leaveRide('${ride.id}')" style="padding: 5px 15px; font-size: 0.9rem;">Leave Ride</button>
                     </div>
                 `;
                 ridesGrid.appendChild(card);
@@ -417,9 +418,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     await updateDoc(matchRef, {
                         currentRiders: increment(1),
                         passengers: arrayUnion(userUid),
-                        passengerNames: arrayUnion(myName)
+                        passengerNames: arrayUnion(myName),
+                        passengerPhones: arrayUnion(currentUserData.phone || 'N/A')
                     });
-                    alert("Match Found! You have been automatically added to a carpool heading there at roughly the same time!");
+                    
+                    // Alert the user
+                    sendMockSMS(`RideSync: Match Found! You've joined ${matchedRide.passengerNames[0]}'s carpool. Their phone is ${matchedRide.passengerPhones[0]}.`);
                 } else {
                     // Create new request since no match was found
                     const payload = {
@@ -431,10 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentRiders: 1,
                         passengers: [userUid],
                         passengerNames: [myName],
+                        passengerPhones: [currentUserData.phone || 'N/A'],
                         createdAt: Date.now()
                     };
                     await addDoc(ridesRef, payload);
-                    alert("Request Submitted! We didn't find an exact match within 30 minutes, but we created a new listing for others to auto-match with you.");
+                    sendMockSMS("RideSync: Request created successfully. We'll text you as soon as someone matches with you!");
                 }
 
                 postingForm.reset();
@@ -452,5 +457,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Join logic is removed since it's auto-matched
+    // 🚪 5. Leave / Delete Logic
+    window.leaveRide = async (id) => {
+        if (!confirm("Are you sure you want to leave this carpool?")) return;
+        
+        try {
+            const rideRef = doc(db, "rides", id);
+            const rideSnap = await getDoc(rideRef);
+            
+            if (rideSnap.exists()) {
+                const ride = rideSnap.data();
+                const userUid = auth.currentUser.uid;
+                const userName = document.getElementById('studentName').value || currentUserData.name;
+                const userPhone = currentUserData.phone || 'N/A';
+                
+                if (ride.currentRiders <= 1) {
+                    // You are the last person, delete the entire ride
+                    await deleteDoc(rideRef);
+                    sendMockSMS("RideSync: Your carpool has been successfully canceled and removed.");
+                } else {
+                    // Remove yourself from the group
+                    await updateDoc(rideRef, {
+                        currentRiders: increment(-1),
+                        passengers: arrayRemove(userUid),
+                        passengerNames: arrayRemove(userName),
+                        passengerPhones: arrayRemove(userPhone)
+                    });
+                    sendMockSMS("RideSync: You have successfully left the carpool group.");
+                }
+            }
+        } catch (err) {
+            console.error("Leave error:", err);
+            alert("Error leaving ride.");
+        }
+    };
+
+    // 📱 Mock SMS Utility
+    function sendMockSMS(message) {
+        const phoneBox = document.getElementById('mock-phone-alert');
+        const textElem = document.getElementById('mock-sms-text');
+        if(!phoneBox) return;
+        
+        textElem.textContent = message;
+        // Slide up
+        phoneBox.style.bottom = '20px';
+        
+        // Hide after 6 seconds
+        setTimeout(() => {
+            phoneBox.style.bottom = '-150px';
+        }, 6000);
+    }
 });
