@@ -192,8 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             try {
-                findNearbyAirports(latitude, longitude); // Always grab airports
-                
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16`);
                 const data = await res.json();
                 
@@ -228,68 +226,64 @@ document.addEventListener('DOMContentLoaded', () => {
     retryVerifyBtn.addEventListener('click', verifyLocationOnCampus);
     devBypassBtn.addEventListener('click', enterPortal);
 
-    async function findNearbyAirports(lat, lon) {
-        try {
-            const queryStr = `[out:json];node["aeroway"="aerodrome"](around:70000, ${lat}, ${lon});out;`;
-            let res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: queryStr });
-            let data = await res.json();
+    const universityAirportsMap = {
+        "Northwestern University": ["O'Hare Intl (ORD)", "Midway Intl (MDW)"],
+        "University of California, Berkeley": ["San Francisco Intl (SFO)", "Oakland Intl (OAK)"],
+        "Stanford University": ["San Francisco Intl (SFO)", "San Jose Intl (SJC)"],
+        "University of Southern California": ["Los Angeles Intl (LAX)", "Burbank Airport (BUR)"],
+        "University of California, Los Angeles": ["Los Angeles Intl (LAX)", "Burbank Airport (BUR)"],
+        "New York University": ["JFK Intl", "LaGuardia (LGA)", "Newark Liberty (EWR)"],
+        "Columbia University": ["JFK Intl", "LaGuardia (LGA)", "Newark Liberty (EWR)"]
+        // Additional schools can be hardcoded here
+    };
+
+    function getAirportsForUniversity(uniName) {
+        const defaultAirports = universityAirportsMap[uniName] || [];
+        const quickContainer = document.getElementById('quick-airports');
+        const endLocInput = document.getElementById('endLoc');
+        
+        if (quickContainer) {
+            quickContainer.innerHTML = ''; // Clear loader
             
-            // Get aerodromes that have 'airport' or 'international' in the name
-            let airports = data.elements.map(el => el.tags.name).filter(n => n && (n.toLowerCase().includes('airport') || n.toLowerCase().includes('international')));
-            
-            // Fallback if none found with strict filters
-            if (airports.length === 0) {
-                 airports = data.elements.map(el => el.tags.name).filter(n => n);
-            }
-            
-            const uniqueAirports = [...new Set(airports)].slice(0, 2);
-            
-            const quickContainer = document.getElementById('quick-airports');
-            const endLocInput = document.getElementById('endLoc');
-            
-            if (quickContainer) {
-                quickContainer.innerHTML = ''; // Clear loader
-                
-                uniqueAirports.forEach(name => {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'btn btn-secondary';
-                    btn.style.padding = '5px 10px';
-                    btn.style.fontSize = '0.9rem';
-                    btn.style.marginRight = '0.5rem';
-                    btn.textContent = name;
-                    btn.onclick = () => {
-                        Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
-                        btn.style.backgroundColor = '#f0f0f0';
-                        endLocInput.value = name;
-                        endLocInput.style.display = 'none';
-                    };
-                    quickContainer.appendChild(btn);
-                });
-                
-                // Add Other button
-                const otherBtn = document.createElement('button');
-                otherBtn.type = 'button';
-                otherBtn.className = 'btn';
-                otherBtn.style.padding = '5px 10px';
-                otherBtn.style.fontSize = '0.9rem';
-                otherBtn.textContent = 'Other';
-                otherBtn.onclick = () => {
-                   Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
-                   otherBtn.style.backgroundColor = '#f0f0f0';
-                   endLocInput.value = '';
-                   endLocInput.style.display = 'block';
+            defaultAirports.forEach(name => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-secondary';
+                btn.style.padding = '5px 10px';
+                btn.style.fontSize = '0.9rem';
+                btn.style.marginRight = '0.5rem';
+                btn.textContent = name;
+                btn.onclick = () => {
+                    Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
+                    btn.style.backgroundColor = '#f0f0f0';
+                    endLocInput.value = name;
+                    endLocInput.style.display = 'none';
                 };
-                quickContainer.appendChild(otherBtn);
-                
-                // Select first by default if exists
-                if (uniqueAirports.length > 0) {
-                    quickContainer.children[0].click();
-                } else {
-                    otherBtn.click();
-                }
+                quickContainer.appendChild(btn);
+            });
+            
+            // Add Other button
+            const otherBtn = document.createElement('button');
+            otherBtn.type = 'button';
+            otherBtn.className = 'btn';
+            otherBtn.style.padding = '5px 10px';
+            otherBtn.style.fontSize = '0.9rem';
+            otherBtn.textContent = 'Other';
+            otherBtn.onclick = () => {
+               Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
+               otherBtn.style.backgroundColor = '#f0f0f0';
+               endLocInput.value = '';
+               endLocInput.style.display = 'block';
+            };
+            quickContainer.appendChild(otherBtn);
+            
+            // Select first by default if exists
+            if (defaultAirports.length > 0) {
+                quickContainer.children[0].click();
+            } else {
+                otherBtn.click();
             }
-        } catch(e) { console.warn("Failed to get airports"); }
+        }
     }
 
     // 🚀 2. Finalize Entry
@@ -298,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainApp.style.display = 'block';
         uniBadge.textContent = `📍 verified at ${currentUniversity}`;
         
+        getAirportsForUniversity(currentUniversity);
         syncRidesForUniversity();
     }
 
