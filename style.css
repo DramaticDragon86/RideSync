@@ -1,21 +1,20 @@
 /* 
- * RideSync - Premium Aesthetics
- * Created with modern UI/UX principles: Glassmorphism, Vibrant Dark Mode, Smooth Transitions
+ * RideSync - Sketchy Pencil & Paper Theme
+ * A hand-drawn, artisanal aesthetic for the university community
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;700&family=Indie+Flower&display=swap');
 
 :root {
-  --primary: #00e5ff;
-  --primary-glow: rgba(0, 229, 255, 0.5);
-  --bg-dark: #0a0a0c;
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --border: rgba(255, 255, 255, 0.1);
-  --text-main: #ffffff;
-  --text-dim: #a0a0b0;
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --paper-bg: #fdfdfd;
+  --paper-texture: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png');
+  --pencil: #333333;
+  --pen-blue: #2a5298;
+  --crayon-red: #ff4757;
+  --border-radius-sketchy: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --font-hand: 'Architects Daughter', cursive;
+  --font-accent: 'Caveat', cursive;
+  --transition: all 0.2s ease-in-out;
 }
 
 * {
@@ -25,448 +24,199 @@
 }
 
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  font-family: var(--font-body);
+  background-color: var(--paper-bg);
+  background-image: var(--paper-texture);
+  color: var(--pencil);
+  font-family: var(--font-hand);
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  padding: 20px;
 }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+h1, h2, h3 {
+  font-family: var(--font-hand);
+  line-height: 1.2;
 }
 
-/* Background Effects */
-.bg-overlay {
+/* Sketchy Borders Utility */
+.sketch-border {
+  border: 3px solid var(--pencil);
+  border-radius: var(--border-radius-sketchy);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Landing / Initial Screen */
+#selection-page {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%);
-  z-index: -1;
+  background: var(--paper-bg);
+  background-image: var(--paper-texture);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
 }
 
-.sphere {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  z-index: -1;
-  opacity: 0.15;
-  pointer-events: none;
+.welcome-card {
+  max-width: 500px;
+  padding: 3rem;
+  background: white;
+  box-shadow: 10px 10px 0px var(--pencil);
+  transform: rotate(-1deg);
 }
 
-.sphere-1 {
-  width: 500px;
-  height: 500px;
-  background: var(--primary);
-  top: -100px;
-  right: -100px;
-  animation: float 20s infinite alternate;
+#map-preview-small {
+  height: 150px;
+  width: 100%;
+  margin: 1rem 0;
+  border: 2px solid var(--pencil);
+  border-radius: 10px;
 }
 
-.sphere-2 {
-  width: 300px;
-  height: 300px;
-  background: #7000ff;
-  bottom: -50px;
-  left: -50px;
-  animation: float 15s infinite alternate-reverse;
-}
-
-@keyframes float {
-  from { transform: translate(0, 0); }
-  to { transform: translate(50px, 50px); }
-}
-
-/* Layout */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+/* Main App Layout */
+#main-app {
+  display: none; /* Shown after selection */
 }
 
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 0;
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(10px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 1rem 0;
+  margin-bottom: 3rem;
+  border-bottom: 2px dashed var(--pencil);
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--primary);
+  font-size: 2rem;
+  font-weight: bold;
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  color: var(--pencil);
+  transform: rotate(-2deg);
 }
 
-.logo i {
-  font-style: normal;
-  background: var(--primary);
-  color: var(--bg-dark);
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 2rem;
-}
-
-.nav-links a {
-  color: var(--text-dim);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.nav-links a:hover {
-  color: var(--primary);
-}
-
-/* Hero Section */
-.hero {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 4rem;
-  padding: 6rem 0;
-}
-
-.hero-content h1 {
-  font-size: 4.5rem;
-  line-height: 1;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(to right, #fff, #888);
-  -webkit-background-clip: text;
-  background-clip: text; /* Fixed lint error */
-  -webkit-text-fill-color: transparent;
-}
-
-/* Ride Card Styling */
-.ride-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 2rem;
-  backdrop-filter: blur(20px);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.ride-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.ride-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.student-info h4 {
-  font-size: 1.1rem;
-  color: #fff;
-}
-
-.student-info span {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-}
-
-.ride-time {
-  background: rgba(0, 229, 255, 0.1);
-  color: var(--primary);
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.ride-route {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  padding-left: 1.5rem;
-}
-
-.ride-route::before {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  background: var(--border);
-}
-
-.route-point {
-  font-size: 0.9rem;
-  color: var(--text-dim);
-  position: relative;
-}
-
-.route-point::after {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 6px;
-  width: 8px;
-  height: 8px;
-  background: var(--border);
-  border-radius: 50%;
-}
-
-.route-point.destination::after {
-  background: var(--primary);
-  box-shadow: 0 0 10px var(--primary);
-}
-
-.fare-box {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  padding: 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.split-stats {
-  text-align: left;
-}
-
-.split-stats label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  display: block;
-}
-
-.split-stats .amount {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--primary);
-}
-
-.riders-count {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-}
-
-.join-btn {
-  background: var(--primary);
-  color: var(--bg-dark);
-  border: none;
-  padding: 0.8rem;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.join-btn:hover {
-  filter: brightness(1.1);
-  transform: scale(1.02);
-}
-
-.join-btn.full {
-  background: var(--border);
-  color: var(--text-dim);
-  cursor: not-allowed;
-}
-
-.hero-content p {
-  font-size: 1.25rem;
-  color: var(--text-dim);
-  margin-bottom: 2.5rem;
-  max-width: 500px;
-}
-
-.hero-image {
-  position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border);
-}
-
-.hero-image img {
-  width: 100%;
-  display: block;
-  transition: transform 0.8s var(--transition);
-}
-
-.hero-image:hover img {
-  transform: scale(1.05);
-}
-
-/* Buttons */
+/* Buttons (Sketchy Style) */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
+  display: inline-block;
+  padding: 10px 25px;
+  font-family: var(--font-hand);
+  font-weight: bold;
+  font-size: 1.1rem;
   text-decoration: none;
-  transition: var(--transition);
+  color: var(--pencil);
+  background: transparent;
+  border: 3px solid var(--pencil);
+  border-radius: var(--border-radius-sketchy);
   cursor: pointer;
-  border: none;
+  transition: var(--transition);
+  position: relative;
+}
+
+.btn:hover {
+  background: rgba(0,0,0,0.05);
+  transform: scale(1.02) rotate(1deg);
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: var(--bg-dark);
-  box-shadow: 0 4px 20px var(--primary-glow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px var(--primary-glow);
+  background: var(--pen-blue);
+  color: white;
+  box-shadow: 4px 4px 0px var(--pencil);
 }
 
 .btn-secondary {
-  background: var(--card-bg);
-  color: #fff;
-  border: 1px solid var(--border);
+  border-color: var(--crayon-red);
+  color: var(--crayon-red);
 }
 
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-/* Features */
-.features {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  padding: 4rem 0;
-}
-
-.feature-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  padding: 2.5rem;
-  border-radius: 24px;
-  backdrop-filter: blur(20px);
+/* Cards (Ride Data) */
+.ride-card {
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 3px solid var(--pencil);
+  border-radius: 15px 225px 25px 255px / 255px 25px 225px 15px;
+  background: white;
+  position: relative;
   transition: var(--transition);
 }
 
-.feature-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-5px);
+.ride-card:hover {
+  transform: translateY(-5px) rotate(0.5deg);
 }
 
-.feature-card i {
-  font-size: 2rem;
-  color: var(--primary);
-  margin-bottom: 1.5rem;
-  display: block;
-}
-
-.feature-card h3 {
+.ride-header {
+  border-bottom: 2px dotted var(--pencil);
+  padding-bottom: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.feature-card p {
-  color: var(--text-dim);
-  font-size: 0.95rem;
-}
-
-/* Booking Simulation */
-.booking-section {
-  padding: 4rem 0;
-  text-align: center;
-}
-
-.booking-card {
-  max-width: 600px;
-  margin: 0 auto;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 32px;
-  padding: 3rem;
-  backdrop-filter: blur(40px);
-}
-
-.booking-form {
+.fare-box {
+  background: #fff9db;
+  border: 2px solid var(--crayon-red);
+  padding: 1rem;
+  border-radius: 5px;
+  margin-top: 1rem;
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  text-align: left;
+  justify-content: space-between;
+  align-items: center;
 }
 
+/* Forms */
 .input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.input-group label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-dim);
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
 }
 
 input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  padding: 1rem;
-  border-radius: 12px;
-  color: #fff;
-  font-family: inherit;
-  transition: var(--transition);
+  width: 100%;
+  padding: 10px;
+  font-family: var(--font-hand);
+  border: 2px solid var(--pencil);
+  background: #f9f9f9;
+  border-radius: 5px;
 }
 
 input:focus {
   outline: none;
-  border-color: var(--primary);
-  background: rgba(255, 255, 255, 0.1);
+  border-style: dashed;
 }
 
-footer {
-  padding: 4rem 0;
-  border-top: 1px solid var(--border);
-  margin-top: 4rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--text-dim);
-  font-size: 0.9rem;
+/* Helpers */
+.active-uni-badge {
+  background: var(--pen-blue);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  display: inline-block;
+  margin-top: 0.5rem;
 }
 
-@media (max-width: 968px) {
-  .hero {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .hero-content h1 {
-    font-size: 3rem;
-  }
-  .hero-content p {
-    margin: 0 auto 2.5rem auto;
-  }
-  .features {
-    grid-template-columns: 1fr;
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pencil);
+  border-radius: 10px;
 }

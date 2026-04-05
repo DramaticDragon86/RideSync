@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="RideSync - The future of seamless transportation. Book, track, and sync your rides with ease.">
-    <title>RideSync | Modern Transportation Orchestration</title>
+    <title>RideSync | Campus Sketchbook</title>
     
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2300e5ff%22/><text y=%22.9em%22 font-size=%2280%22 x=%22.1em%22 font-family=%22serif%22 fill=%22%230a0a0c%22>R</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22 x=%22.1em%22 font-family=%22serif%22 fill=%22%23333333%22>✏️</text></svg>">
     
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
@@ -19,148 +18,118 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-    <div class="bg-overlay"></div>
-    <div class="sphere sphere-1"></div>
-    <div class="sphere sphere-2"></div>
+    
+    <!-- NEW: Selection Page (Welcome Overlay) -->
+    <div id="selection-page">
+        <div class="welcome-card sketch-border">
+            <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Welcome! ✏️</h1>
+            <p style="margin-bottom: 2rem;">RideSync connects students for easier travel. Let's find your campus.</p>
+            
+            <div id="location-view">
+                <div id="locationLoader" style="padding: 1rem; color: var(--pencil); font-size: 1.1rem;">
+                    <i class="fa-solid fa-satellite-dish fa-fade"></i> Locating you...
+                </div>
+                
+                <div id="detected-campus-info" style="display: none;">
+                    <p style="font-size: 0.8rem; text-transform: uppercase; color: #888;">Detected Campus:</p>
+                    <h2 id="detected-uni-name" style="margin-bottom: 1rem; color: var(--pen-blue);">--</h2>
+                    <div id="map-preview-small"></div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <button id="confirm-uni-btn" class="btn btn-primary">Looks Correct!</button>
+                        <button id="change-uni-btn" class="btn">Search Different</button>
+                    </div>
+                </div>
 
-    <div class="container">
-        <nav>
-            <a href="#" class="logo">
-                <i>R</i> RideSync
-            </a>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#ride-feed">Feed</a>
-                <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" class="github-link">
-                    <i class="fa-brands fa-github"></i> Repo
-                </a>
+                <div id="manual-search-view" style="display: none;">
+                    <input type="text" id="manualUniSearch" placeholder="Enter university name..." style="margin-bottom: 1rem;">
+                    <button id="search-uni-btn" class="btn btn-primary">Search Now</button>
+                </div>
             </div>
-            <a href="#post-ride" class="btn btn-secondary">Post Ride</a>
+        </div>
+    </div>
+
+    <!-- MAIN APP: Hidden until university is selected -->
+    <div id="main-app" class="container">
+        <nav>
+            <div style="display: flex; flex-direction: column;">
+                <a href="#" class="logo">RideSync</a>
+                <span class="active-uni-badge" id="currentUniBadge">--</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" onclick="window.location.reload()" style="font-size: 0.8rem; color: #aaa; text-decoration: underline;">Switch Campus</a>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="#post-listing" class="btn" style="border-width: 2px;">Make Listing</a>
+                <a href="#ride-feed" class="btn btn-primary" style="border-width: 2px;">Find Rides</a>
+            </div>
         </nav>
 
-        <header class="hero">
-            <div class="hero-content">
-                <h1>Campus Connect, <span style="color: var(--primary);">Synchronized.</span></h1>
-                <p>The exclusive ride-sharing network for students. Detect your campus, sync with peers, and find the nearest airport instantly.</p>
-                <div class="hero-btns" style="display: flex; gap: 1rem;">
-                    <a href="#post-ride" class="btn btn-primary">Post a Ride</a>
-                    <a href="#ride-feed" class="btn btn-secondary">Find a Ride</a>
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="assets/hero.png" alt="Student Transportation illustration">
-            </div>
+        <header style="text-align: center; padding: 4rem 0;">
+            <h1 style="font-size: 3.5rem; transform: rotate(-1deg);">Greetings, Scholars!</h1>
+            <p style="font-family: var(--font-accent); font-size: 1.5rem; color: var(--pen-blue);">Connect with other students heading to the airport or train station.</p>
         </header>
 
-        <!-- New: Post a Ride Form -->
-        <section id="post-ride" class="booking-section">
-            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Post Your Journey</h2>
-            <div class="booking-card">
-                <div id="locationLoader" style="display: none; padding: 1rem; color: var(--primary); font-size: 0.8rem;">
-                    <i class="fa-solid fa-satellite-dish fa-fade"></i> Locating your campus...
-                </div>
-                <form class="booking-form" id="postingForm">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Listing Form -->
+        <section id="post-listing" style="margin-bottom: 6rem;">
+            <div class="ride-card">
+                <h2 style="margin-bottom: 1.5rem; text-decoration: underline;">Post Your Listing 📋</h2>
+                <form id="postingForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <div class="input-group">
-                            <label for="studentName">Student Name</label>
-                            <input type="text" id="studentName" placeholder="Full Name" required>
+                            <label>Full Name</label>
+                            <input type="text" id="studentName" placeholder="e.g. Alex" required>
                         </div>
                         <div class="input-group">
-                            <label for="departureTime">Departure Time</label>
+                            <label>Departure Time</label>
                             <input type="time" id="departureTime" required>
                         </div>
                     </div>
                     
                     <div class="input-group">
-                        <label for="startLoc" style="display: flex; justify-content: space-between; align-items: center;">
-                            Current Location
-                            <button type="button" id="autoFillBtn" class="btn-micro" style="color: var(--primary); font-size: 0.7rem; cursor: pointer; background: none; border: none;">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Smart Detect
-                            </button>
-                        </label>
-                        <input type="text" id="startLoc" placeholder="e.g. Stanford University" required>
+                        <label>Pickup Location on Campus</label>
+                        <input type="text" id="startLoc" placeholder="e.g. Quad or Library" required>
                     </div>
 
                     <div class="input-group">
-                        <label for="endLoc">Destination</label>
+                        <label>Destination Airport</label>
                         <input type="text" id="endLoc" list="airportList" placeholder="e.g. SFO Airport" required>
-                        <datalist id="airportList">
-                            <!-- Populated dynamically -->
-                        </datalist>
+                        <datalist id="airportList"></datalist>
                     </div>
 
                     <div class="input-group">
-                        <label for="baseFare">Estimated Total Trip Fare ($)</label>
-                        <input type="number" id="baseFare" placeholder="e.g. 45.00" min="0" step="1" required>
+                        <label>Total Fare ($)</label>
+                        <input type="number" id="baseFare" step="1" required>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-                        <i class="fa-solid fa-plus"></i> Create Posting
-                    </button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Post to Community</button>
                 </form>
             </div>
-            
-            <!-- Map Preview (Hidden by default, shown after smart detect) -->
-            <div id="mapContainer" style="display: none; height: 300px; width: 100%; max-width: 600px; margin: 2rem auto; border-radius: 24px; border: 1px solid var(--border); overflow: hidden;">
-                <div id="map" style="height: 100%; width: 100%;"></div>
-            </div>
         </section>
 
-        <!-- New: Live Ride Feed -->
-        <section id="ride-feed" class="feed-section" style="padding: 6rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
-                <h2 style="font-size: 2.5rem;">Live Postings</h2>
-                <div id="activeCounter" style="color: var(--text-dim); font-size: 0.9rem;">
-                    Showing <span id="rideCount" style="color: var(--primary); font-weight: bold;">0</span> shared rides
-                </div>
-            </div>
+        <!-- Ride Feed -->
+        <section id="ride-feed">
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem; border-bottom: 3px double #333; display: inline-block;">Available Postings</h2>
             
-            <div id="ridesGrid" class="features" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));">
-                <!-- Rides will be dynamically injected here -->
-                <div id="noRides" style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 4rem;">
-                    <i class="fa-solid fa-car-side" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                    <p>No active postings. Be the first to share your trip!</p>
+            <div id="ridesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+                <!-- Postings loaded here -->
+                <div id="noRides" style="display: none; padding: 4rem; text-align: center;">
+                    <p style="font-size: 1.5rem;">No listings at this university yet!</p>
+                    <p>Be the first to post a trip.</p>
                 </div>
-            </div>
-        </section>
-
-        <section id="features" class="features">
-            <div class="feature-card">
-                <i class="fa-solid fa-location-dot"></i>
-                <h3>Smart Auto-Fill</h3>
-                <p>One-tap destination matching. Detects your campus and locates the nearest airports automatically.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fa-solid fa-calculator"></i>
-                <h3>Smart Split</h3>
-                <p>Fare splitting calculated instantly. The more students join, the less you pay.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fa-solid fa-user-graduate"></i>
-                <h3>Verified Students</h3>
-                <p>Exclusive access for university members. Secure, trusted, and community-driven.</p>
             </div>
         </section>
         
-    <!-- Footer -->
-    <footer>
-        <div class="logo" style="font-size: 1rem;">
-            <i>R</i> RideSync
-        </div>
-        <div class="footer-links">
-            &copy; 2026 RideSync Technologies. Built for Excellence.
-        </div>
-        <div class="socials" style="display: flex; gap: 1rem;">
-            <a href="https://github.com/DramaticDragon86/RideSync" class="nav-links" target="_blank" style="font-size: 1.2rem;">
-                <i class="fa-brands fa-github"></i>
-            </a>
-        </div>
-    </footer>
+        <footer style="margin-top: 6rem; padding: 4rem 0; border-top: 2px dashed #999; text-align: center; color: #777;">
+            <p>Built with pencil & enthusiasm for students everywhere.</p>
+            <div style="margin-top: 1rem;">
+                <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" style="color: #333;">Repository 📓</a>
+            </div>
+        </footer>
+    </div>
 
-    <!-- Leaflet Maps JS -->
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Firebase Integration -->
     <script type="module" src="main.js"></script>
 </body>
 </html>
