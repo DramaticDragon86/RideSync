@@ -25,9 +25,8 @@ const auth = getAuth(app);
 document.addEventListener('DOMContentLoaded', () => {
     // 🎨 UI Elements
     const authPage = document.getElementById('auth-page');
-    const selectionPage = document.getElementById('selection-page');
+    const verificationPage = document.getElementById('verification-page');
     const mainApp = document.getElementById('main-app');
-    
     const authForm = document.getElementById('authForm');
     const signupFields = document.getElementById('signup-fields');
     const authTitle = document.getElementById('auth-title');
@@ -39,8 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const authSchoolInput = document.getElementById('authSchool');
     const authUniSuggestions = document.getElementById('auth-uni-suggestions');
 
-    const universityNameEl = document.getElementById('detected-uni-name');
-    const locationLoader = document.getElementById('locationLoader');
+    const verifySchoolName = document.getElementById('verify-school-name');
+    const verifyStatus = document.getElementById('verify-status');
+    const verifyError = document.getElementById('verify-error');
+    const retryVerifyBtn = document.getElementById('retry-verify-btn');
+    const devBypassBtn = document.getElementById('dev-bypass-btn');
+
     const uniBadge = document.getElementById('currentUniBadge');
     const ridesGrid = document.getElementById('ridesGrid');
     const noRides = document.getElementById('noRides');
@@ -55,35 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔐 0. Auth Logic
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // User is signed in
             authPage.style.display = 'none';
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     currentUserData = userDoc.data();
                     document.getElementById('studentName').value = currentUserData.name;
-                    
-                    // If they have a school set, bypass selection and go straight to app
-                    if (currentUserData.school) {
-                        currentUniversity = currentUserData.school;
-                        enterPortal();
-                    } else {
-                        selectionPage.style.display = 'flex';
-                        detectLocation();
-                    }
+                    currentUniversity = currentUserData.school;
+                    verifyLocationOnCampus();
                 } else {
-                    selectionPage.style.display = 'flex';
-                    detectLocation();
+                    console.error("No user data found in Firestore");
+                    signOut(auth);
                 }
             } catch(e) {
                 console.error("Error fetching user data", e);
-                selectionPage.style.display = 'flex';
-                detectLocation();
+                signOut(auth);
             }
         } else {
-            // User is signed out
             authPage.style.display = 'flex';
-            selectionPage.style.display = 'none';
+            verificationPage.style.display = 'none';
             mainApp.style.display = 'none';
         }
     });
@@ -133,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 
-                // Save extra metadata
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     name,
                     phone,
@@ -181,50 +173,84 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    // 📍 1. Initial Location Detection
-    async function detectLocation() {
+    // 📍 1. Strict Campus Verification
+    function verifyLocationOnCampus() {
+        verificationPage.style.display = 'flex';
+        mainApp.style.display = 'none';
+        verifySchoolName.textContent = currentUniversity;
+        verifyStatus.style.display = 'block';
+        verifyStatus.innerHTML = '<i class="fa-solid fa-satellite-dish fa-fade"></i> Checking your GPS...';
+        verifyError.style.display = 'none';
+        retryVerifyBtn.style.display = 'none';
+        devBypassBtn.style.display = 'inline-block'; // Helpful for devs testing at home
+
         if (!navigator.geolocation) {
-            showManualSearch("Location access not supported.");
+            failVerification("Geolocation is not supported by your device.");
             return;
         }
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             try {
-                // Reverse Geocode
+                findNearbyAirports(latitude, longitude); // Always grab airports
+                
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16`);
                 const data = await res.json();
                 
-                const uniName = data.address.university || data.address.college || data.display_name.split(',')[0];
-                currentUniversity = uniName;
+                const detectedSchool = data.address?.university || data.address?.college || data.display_name?.split(',')[0];
                 
-                // Show detection results
-                locationLoader.style.display = 'none';
-                document.getElementById('detected-campus-info').style.display = 'block';
-                universityNameEl.textContent = uniName;
+                // Extremely basic fuzzy matching: check if detected name shares at least one significant word with registered school
+                const registeredWords = currentUniversity.toLowerCase().split(' ').filter(w => w.length > 3);
+                const detectedWords = (detectedSchool || '').toLowerCase();
                 
-                // Map Preview
-                const map = L.map('map-preview-small').setView([latitude, longitude], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                L.marker([latitude, longitude]).addTo(map).bindPopup(uniName).openPopup();
+                const isMatch = registeredWords.some(word => detectedWords.includes(word));
 
-                // Find Airports Nearby
-                findNearbyAirports(latitude, longitude);
-
+                if (isMatch || detectedSchool === currentUniversity) {
+                    enterPortal();
+                } else {
+                    failVerification(`You appear to be near "${detectedSchool || 'an unknown location'}". You must be at <strong>${currentUniversity}</strong>.`);
+                }
             } catch (err) {
-                showManualSearch("Unable to find your campus automatically.");
+                failVerification("Network error while verifying location.");
             }
         }, () => {
-            showManualSearch("Location access was denied.");
+            failVerification("You must grant location permissions to verify you're on campus.");
         });
     }
 
-    function showManualSearch(msg) {
-        locationLoader.textContent = msg;
-        setTimeout(() => {
-            locationLoader.style.display = 'none';
-            document.getElementById('manual-search-view').style.display = 'block';
-        }, 2000);
+    function failVerification(reasonHtml) {
+        verifyStatus.style.display = 'none';
+        verifyError.style.display = 'block';
+        verifyError.innerHTML = reasonHtml;
+        retryVerifyBtn.style.display = 'inline-block';
+    }
+
+    retryVerifyBtn.addEventListener('click', verifyLocationOnCampus);
+    devBypassBtn.addEventListener('click', enterPortal);
+
+    async function findNearbyAirports(lat, lon) {
+        try {
+            const queryStr = `[out:json];node["aeroway"="aerodrome"](around:70000, ${lat}, ${lon});out;`;
+            const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: queryStr });
+            const data = await res.json();
+            const airports = data.elements.map(el => el.tags.name).filter(n => n);
+            
+            airportList.innerHTML = '';
+            airports.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                airportList.appendChild(opt);
+            });
+        } catch(e) { console.warn("Failed to get airports"); }
+    }
+
+    // 🚀 2. Finalize Entry
+    function enterPortal() {
+        verificationPage.style.display = 'none';
+        mainApp.style.display = 'block';
+        uniBadge.textContent = `📍 verified at ${currentUniversity}`;
+        
+        syncRidesForUniversity();
     }
 
     async function findNearbyAirports(lat, lon) {
@@ -241,60 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🚀 2. Finalize University Selection
-    const manualSearchInput = document.getElementById('manualUniSearch');
-    const uniSuggestions = document.getElementById('uni-suggestions');
-
-    // Live University Search (Regulated Selection via HTTPS GitHub Raw)
-    let searchTimeout = null;
-    let universityDataCache = null;
-
-    manualSearchInput.addEventListener('input', () => {
-        const val = manualSearchInput.value.toLowerCase();
-        if (val.length < 3) return;
-
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(async () => {
-            try {
-                // Fetch the full list once (HTTPS safe, no Mixed Content)
-                if (!universityDataCache) {
-                    const res = await fetch('https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json');
-                    universityDataCache = await res.json();
-                }
-                
-                // Filter locally
-                const matches = universityDataCache.filter(uni => uni.name.toLowerCase().includes(val)).slice(0, 10);
-                
-                uniSuggestions.innerHTML = '';
-                matches.forEach(uni => {
-                    const opt = document.createElement('option');
-                    opt.value = uni.name;
-                    uniSuggestions.appendChild(opt);
-                });
-            } catch (e) { console.warn("Uni search cache fail:", e); }
-        }, 300);
-    });
-
-    document.getElementById('confirm-uni-btn').addEventListener('click', enterPortal);
-    document.getElementById('search-uni-btn').addEventListener('click', () => {
-        const manualName = manualSearchInput.value;
-        if (manualName) {
-            currentUniversity = manualName;
-            enterPortal();
-        }
-    });
-
-    document.getElementById('change-uni-btn').addEventListener('click', () => {
-        document.getElementById('detected-campus-info').style.display = 'none';
-        document.getElementById('manual-search-view').style.display = 'block';
-    });
-
+    // 🚀 2. Finalize Entry
     function enterPortal() {
-        selectionPage.style.display = 'none';
+        verificationPage.style.display = 'none';
         mainApp.style.display = 'block';
-        uniBadge.textContent = `📍 ${currentUniversity}`;
+        uniBadge.textContent = `📍 verified at ${currentUniversity}`;
         
-        // Load Real-Time Data (Using a more robust client-side filter to avoid Indexing Errors)
         syncRidesForUniversity();
     }
 
