@@ -280,16 +280,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function syncRidesForUniversity() {
         const ridesRef = collection(db, "rides");
         
-        // 🔥 Switch to a simpler query that doesn't REQUIRE the user to create 
-        // manual indexes in the Firebase Console (Fixes "nothing appears" bug!)
         const q = query(ridesRef, orderBy("createdAt", "desc"));
 
         onSnapshot(q, (snapshot) => {
             const allRides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Client-side filtering ensures it works even without a Firebase Index!
             const filteredRides = allRides.filter(ride => ride.university === currentUniversity);
-            
             renderRides(filteredRides);
         }, (error) => {
             console.error("Firebase sync error:", error);
@@ -321,7 +316,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     
                     <div style="margin: 1rem 0;">
-                        <p><strong>Pickup:</strong> ${ride.start}</p>
                         <p><strong>Heading to:</strong> ${ride.end}</p>
                     </div>
 
@@ -347,18 +341,23 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const payload = {
                 name: document.getElementById('studentName').value,
-                start: document.getElementById('startLoc').value,
                 end: document.getElementById('endLoc').value,
                 time: document.getElementById('departureTime').value,
                 baseFare: parseFloat(document.getElementById('baseFare').value),
                 riders: 1,
-                university: currentUniversity, // Scoping to current uni
+                university: currentUniversity,
                 createdAt: Date.now()
             };
 
             try {
                 await addDoc(collection(db, "rides"), payload);
                 postingForm.reset();
+                
+                const quickAirports = document.getElementById('quick-airports');
+                if (quickAirports && quickAirports.children.length > 0 && quickAirports.children[0].tagName === 'BUTTON') {
+                    quickAirports.children[0].click();
+                }
+
                 window.scrollTo({ top: ridesGrid.offsetTop - 100, behavior: 'smooth' });
             } catch (err) {
                 alert("Error Posting Sketch: " + err.message);
@@ -375,7 +374,4 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Join error:", err);
         }
     };
-
-    // Kickoff
-    detectLocation();
 });

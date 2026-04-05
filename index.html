@@ -125,14 +125,11 @@
                     </div>
                     
                     <div class="input-group">
-                        <label>Pickup Location on Campus</label>
-                        <input type="text" id="startLoc" placeholder="e.g. Quad or Library" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Destination Airport</label>
-                        <input type="text" id="endLoc" list="airportList" placeholder="e.g. SFO Airport" required>
-                        <datalist id="airportList"></datalist>
+                        <label>Destination</label>
+                        <div id="quick-airports" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <span id="quick-loader" style="font-size: 0.8rem; color: #888;">Finding nearby airports...</span>
+                        </div>
+                        <input type="text" id="endLoc" placeholder="Type destination..." style="display: none;" required>
                     </div>
 
                     <div class="input-group">
