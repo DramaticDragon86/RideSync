@@ -1,7 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where 
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where, setDoc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- START: FIREBASE CONFIGURATION ---
 const firebaseConfig = {
@@ -16,12 +19,26 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 // --- END: FIREBASE CONFIGURATION ---
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🎨 UI Elements
+    const authPage = document.getElementById('auth-page');
     const selectionPage = document.getElementById('selection-page');
     const mainApp = document.getElementById('main-app');
+    
+    const authForm = document.getElementById('authForm');
+    const signupFields = document.getElementById('signup-fields');
+    const authTitle = document.getElementById('auth-title');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const toggleAuthLink = document.getElementById('toggle-auth-link');
+    const toggleAuthText = document.getElementById('toggle-auth-text');
+    const authError = document.getElementById('authError');
+    const authSchoolInput = document.getElementById('authSchool');
+    const authUniSuggestions = document.getElementById('auth-uni-suggestions');
+
     const universityNameEl = document.getElementById('detected-uni-name');
     const locationLoader = document.getElementById('locationLoader');
     const uniBadge = document.getElementById('currentUniBadge');
@@ -32,7 +49,137 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // State Tracking
     let currentUniversity = null;
-    let localRides = [];
+    let currentUserData = null;
+    let isSignupMode = true;
+
+    // 🔐 0. Auth Logic
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User is signed in
+            authPage.style.display = 'none';
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    document.getElementById('studentName').value = currentUserData.name;
+                    
+                    // If they have a school set, bypass selection and go straight to app
+                    if (currentUserData.school) {
+                        currentUniversity = currentUserData.school;
+                        enterPortal();
+                    } else {
+                        selectionPage.style.display = 'flex';
+                        detectLocation();
+                    }
+                } else {
+                    selectionPage.style.display = 'flex';
+                    detectLocation();
+                }
+            } catch(e) {
+                console.error("Error fetching user data", e);
+                selectionPage.style.display = 'flex';
+                detectLocation();
+            }
+        } else {
+            // User is signed out
+            authPage.style.display = 'flex';
+            selectionPage.style.display = 'none';
+            mainApp.style.display = 'none';
+        }
+    });
+
+    toggleAuthLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        isSignupMode = !isSignupMode;
+        if (isSignupMode) {
+            signupFields.style.display = 'block';
+            authTitle.textContent = 'Sign Up ✏️';
+            authSubtitle.textContent = 'Create your RideSync student account.';
+            authSubmitBtn.textContent = 'Create Account';
+            toggleAuthLink.textContent = 'Log In Here';
+            toggleAuthText.childNodes[0].nodeValue = 'Already have an account? ';
+            document.getElementById('authName').required = true;
+            document.getElementById('authPhone').required = true;
+            document.getElementById('authSchool').required = true;
+        } else {
+            signupFields.style.display = 'none';
+            authTitle.textContent = 'Log In 📓';
+            authSubtitle.textContent = 'Welcome back to RideSync.';
+            authSubmitBtn.textContent = 'Log In';
+            toggleAuthLink.textContent = 'Sign Up Here';
+            toggleAuthText.childNodes[0].nodeValue = "Don't have an account? ";
+            document.getElementById('authName').required = false;
+            document.getElementById('authPhone').required = false;
+            document.getElementById('authSchool').required = false;
+        }
+        authError.style.display = 'none';
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        authError.style.display = 'none';
+        
+        const email = document.getElementById('authEmail').value;
+        const password = document.getElementById('authPassword').value;
+
+        try {
+            if (isSignupMode) {
+                if (!email.endsWith('.edu')) {
+                    throw new Error("Must use a valid .edu email address.");
+                }
+                const name = document.getElementById('authName').value;
+                const phone = document.getElementById('authPhone').value;
+                const school = document.getElementById('authSchool').value;
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                
+                // Save extra metadata
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    name,
+                    phone,
+                    school,
+                    email
+                });
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+            }
+        } catch (error) {
+            authError.textContent = error.message;
+            authError.style.display = 'block';
+            console.error("Auth Error:", error);
+        }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        signOut(auth);
+    });
+
+    // Live University Search for Signup
+    let authSearchTimeout = null;
+    let authUniversityDataCache = null;
+
+    authSchoolInput.addEventListener('input', () => {
+        const val = authSchoolInput.value.toLowerCase();
+        if (val.length < 3) return;
+
+        clearTimeout(authSearchTimeout);
+        authSearchTimeout = setTimeout(async () => {
+            try {
+                if (!authUniversityDataCache) {
+                    const res = await fetch('https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json');
+                    authUniversityDataCache = await res.json();
+                }
+                const matches = authUniversityDataCache.filter(uni => uni.name.toLowerCase().includes(val)).slice(0, 10);
+                authUniSuggestions.innerHTML = '';
+                matches.forEach(uni => {
+                    const opt = document.createElement('option');
+                    opt.value = uni.name;
+                    authUniSuggestions.appendChild(opt);
+                });
+            } catch (e) { console.warn("Uni search fail:", e); }
+        }, 300);
+    });
 
     // 📍 1. Initial Location Detection
     async function detectLocation() {

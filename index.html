@@ -18,9 +18,56 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-    
-    <!-- NEW: Selection Page (Welcome Overlay) -->
-    <div id="selection-page">
+    <!-- NEW: Auth Page (Login / Signup) -->
+    <div id="auth-page" style="display: none;">
+        <div class="welcome-card sketch-border" style="max-width: 400px; margin: 2rem auto; transform: rotate(1deg);">
+            <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="auth-title">Sign Up ✏️</h1>
+            <p style="margin-bottom: 1.5rem; font-family: var(--font-accent); color: var(--pen-blue);" id="auth-subtitle">Create your RideSync student account.</p>
+
+            <form id="authForm">
+                <!-- Signup Only Fields -->
+                <div id="signup-fields">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="authName" placeholder="e.g. Alex" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="authPhone" placeholder="(555) 555-5555" required>
+                    </div>
+                    <div class="input-group">
+                        <label>School Name</label>
+                        <input type="text" id="authSchool" list="auth-uni-suggestions" placeholder="e.g. Stanford University" required>
+                        <datalist id="auth-uni-suggestions"></datalist>
+                    </div>
+                </div>
+
+                <!-- Always Visible -->
+                <div class="input-group">
+                    <label>School Email (.edu)</label>
+                    <input type="email" id="authEmail" placeholder="alex@university.edu" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="authPassword" required>
+                </div>
+
+                <div id="authError" style="color: var(--crayon-red); font-size: 0.8rem; margin-bottom: 1rem; display: none;"></div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="authSubmitBtn">Create Account</button>
+            </form>
+            
+            <div style="margin-top: 1.5rem; font-size: 0.9rem;">
+                <p id="toggle-auth-text">
+                    Already have an account? 
+                    <a href="#" id="toggle-auth-link" style="color: var(--pen-blue); font-weight: bold;">Log In Here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selection Page (Welcome Overlay) -->
+    <div id="selection-page" style="display: none;">
         <div class="welcome-card sketch-border">
             <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Welcome! ✏️</h1>
             <p style="margin-bottom: 2rem;">RideSync connects students for easier travel. Let's find your campus.</p>
@@ -57,8 +104,9 @@
                 <a href="#" class="logo">RideSync</a>
                 <span class="active-uni-badge" id="currentUniBadge">--</span>
             </div>
-            <div class="nav-links">
+            <div class="nav-links" style="display: flex; gap: 1rem;">
                 <a href="#" onclick="window.location.reload()" style="font-size: 0.8rem; color: #aaa; text-decoration: underline;">Switch Campus</a>
+                <a href="#" id="logout-btn" style="font-size: 0.8rem; color: var(--crayon-red); text-decoration: underline;">Log Out</a>
             </div>
             <div style="display: flex; gap: 1rem;">
                 <a href="#post-listing" class="btn" style="border-width: 2px;">Make Listing</a>
