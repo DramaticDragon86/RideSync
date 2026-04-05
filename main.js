@@ -1,55 +1,71 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// --- START: FIREBASE CONFIGURATION ---
+// 🎓 ACTION REQUIRED: Replace this config with your own from Firebase Console!
+// 1. Visit console.firebase.google.com
+// 2. Add Project -> Add Web App
+// 3. Paste the config object here
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "ridesync-XXXX.firebaseapp.com",
+    projectId: "ridesync-XXXXX",
+    storageBucket: "ridesync-XXXX.appspot.com",
+    messagingSenderId: "XXXXXXXXXXXX",
+    appId: "1:XXXXXXXXXX:web:XXXXXXXXXXXXX"
+};
+
+// Initialize Firebase (safely checks if a real config exists)
+const isFirebaseSetup = firebaseConfig.apiKey !== "YOUR_API_KEY";
+let db = null;
+if (isFirebaseSetup) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+} else {
+    console.warn("⚠️ RideSync: Firebase not configured. Using local session mode.");
+}
+// --- END: FIREBASE CONFIGURATION ---
+
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Data Store (with LocalStorage persistence)
-    const STORAGE_KEY = 'ridesync_active_postings';
-    
-    // Initial data if storage is empty
-    const defaultRides = [
-        {
-            id: 1,
-            name: "Alex Johnson",
-            start: "University Library",
-            end: "Union Station",
-            time: "18:30",
-            baseFare: 45.00,
-            riders: 1 
-        },
-        {
-            id: 2,
-            name: "Sarah Chen",
-            start: "Engineering Quad",
-            end: "SFO Airport",
-            time: "05:00",
-            baseFare: 60.00,
-            riders: 2
-        }
-    ];
-
-    let rides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultRides;
-
+    // 1. Data Store (Firebase with Local Fallback)
     const ridesGrid = document.getElementById('ridesGrid');
     const rideCountEl = document.getElementById('rideCount');
     const postingForm = document.getElementById('postingForm');
     const noRides = document.getElementById('noRides');
 
-    function saveRides() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(rides));
+    let localRides = []; // Fallback if Firebase is not setup
+
+    // 2. Real-Time Sync Listener
+    if (db) {
+        const ridesRef = collection(db, "rides");
+        const q = query(ridesRef, orderBy("createdAt", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            localRides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderRides(localRides);
+        }, (error) => {
+            console.error("Firebase sync error:", error);
+        });
+    } else {
+        // Simple mock data for demo if keys aren't added
+        localRides = JSON.parse(localStorage.getItem('ridesync_local') || '[]');
+        renderRides(localRides);
     }
 
-    // 2. Render Rides
-    function renderRides() {
+    // 3. Render Logic
+    function renderRides(data) {
         if (!ridesGrid) return;
-
         ridesGrid.innerHTML = '';
-        if (rides.length === 0) {
+        
+        if (data.length === 0) {
             noRides.style.display = 'block';
             ridesGrid.appendChild(noRides);
         } else {
             noRides.style.display = 'none';
-            ridesGrid.appendChild(noRides); // Hidden ref
-            
-            rides.forEach(ride => {
+            data.forEach(ride => {
                 const splitFare = (ride.baseFare / ride.riders).toFixed(2);
-                
                 const card = document.createElement('div');
                 card.className = 'ride-card';
                 card.innerHTML = `
@@ -60,19 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="ride-time"><i class="fa-regular fa-clock"></i> ${ride.time}</div>
                     </div>
-                    
                     <div class="ride-route">
                         <div class="route-point">From: <strong>${ride.start}</strong></div>
                         <div class="route-point destination">To: <strong>${ride.end}</strong></div>
                     </div>
-
                     <div class="fare-box">
                         <div class="split-stats">
                             <label>Your Split Estimate</label>
                             <div class="amount">$${splitFare}</div>
                             <div class="riders-count">${ride.riders} ${ride.riders === 1 ? 'Person' : 'People'} synced</div>
                         </div>
-                        <button class="join-btn ${ride.riders >= 4 ? 'full' : ''}" onclick="window.joinRide(${ride.id})">
+                        <button class="join-btn ${ride.riders >= 4 ? 'full' : ''}" 
+                                onclick="window.joinRide('${ride.id}')">
                             ${ride.riders >= 4 ? 'Full' : '<i class="fa-solid fa-plus"></i> Join'}
                         </button>
                     </div>
@@ -80,71 +95,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 ridesGrid.appendChild(card);
             });
         }
-
-        rideCountEl.textContent = rides.length;
+        rideCountEl.textContent = data.length;
     }
 
-    // 3. Post New Ride
+    // 4. Post New Ride (Cloud Persistence)
     if (postingForm) {
-        postingForm.addEventListener('submit', (e) => {
+        postingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const newRide = {
-                id: Date.now(),
+            const payload = {
                 name: document.getElementById('studentName').value,
                 start: document.getElementById('startLoc').value,
                 end: document.getElementById('endLoc').value,
                 time: document.getElementById('departureTime').value,
                 baseFare: parseFloat(document.getElementById('baseFare').value),
-                riders: 1
+                riders: 1,
+                createdAt: Date.now()
             };
 
-            rides.unshift(newRide);
-            saveRides();
-            renderRides();
+            if (db) {
+                try {
+                    await addDoc(collection(db, "rides"), payload);
+                } catch (e) {
+                    alert("Error saving to cloud: " + e.message);
+                }
+            } else {
+                localRides.unshift({ id: Date.now().toString(), ...payload });
+                localStorage.setItem('ridesync_local', JSON.stringify(localRides));
+                renderRides(localRides);
+            }
+
             postingForm.reset();
-            
-            // Success feedback
             const btn = postingForm.querySelector('button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Posted Successfully!';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Posted Globally!';
             btn.style.background = '#00ff88';
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '';
-                window.scrollTo({
-                    top: document.getElementById('ride-feed').offsetTop - 100,
-                    behavior: 'smooth'
-                });
-            }, 1500);
+            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Posting'; btn.style.background = ''; }, 1500);
         });
     }
 
-    // 4. Join Ride Logic (Exposed Globally)
-    window.joinRide = (id) => {
-        const ride = rides.find(r => r.id === id);
-        if (ride && ride.riders < 4) {
-            ride.riders++;
-            saveRides();
-            renderRides();
-        } else if (ride && ride.riders >= 4) {
-            alert("This ride is currently full!");
+    // 5. Join Ride (Cloud Update)
+    window.joinRide = async (id) => {
+        if (db) {
+            const rideRef = doc(db, "rides", id);
+            try {
+                await updateDoc(rideRef, { riders: increment(1) });
+            } catch (e) {
+                alert("This ride is likely from an old local session.");
+            }
+        } else {
+            const ride = localRides.find(r => r.id === id);
+            if (ride && ride.riders < 4) {
+                ride.riders++;
+                localStorage.setItem('ridesync_local', JSON.stringify(localRides));
+                renderRides(localRides);
+            }
         }
     };
-
-    // 5. Cross-Tab Synchronization
-    window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY) {
-            rides = JSON.parse(e.newValue);
-            renderRides();
-        }
-    });
-
-    // Initial Render
-    renderRides();
-
-    // 5. Smooth Scroll
+    // 6. Smooth Scroll
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
