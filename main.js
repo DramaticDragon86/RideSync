@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
             try {
-                const res = await fetch(`http://universities.hipo.co/search?name=${encodeURIComponent(val)}`);
+                const res = await fetch(`https://universities.hipo.co/search?name=${encodeURIComponent(val)}`);
                 const data = await res.json();
                 
                 uniSuggestions.innerHTML = '';
