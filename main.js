@@ -9,12 +9,13 @@ import {
 // 2. Add Project -> Add Web App
 // 3. Paste the config object here
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "ridesync-XXXX.firebaseapp.com",
-    projectId: "ridesync-XXXXX",
-    storageBucket: "ridesync-XXXX.appspot.com",
-    messagingSenderId: "XXXXXXXXXXXX",
-    appId: "1:XXXXXXXXXX:web:XXXXXXXXXXXXX"
+  apiKey: "AIzaSyBlf4nxd3lwSOcRaIkSXRDyfdWxmaiF4ko",
+  authDomain: "ridesync-48836.firebaseapp.com",
+  projectId: "ridesync-48836",
+  storageBucket: "ridesync-48836.firebasestorage.app",
+  messagingSenderId: "376915967476",
+  appId: "1:376915967476:web:75e1401ffe81f4d5af0da1",
+  measurementId: "G-SP3X8NEBWN"
 };
 
 // Initialize Firebase (safely checks if a real config exists)
