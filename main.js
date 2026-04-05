@@ -151,7 +151,92 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-    // 6. Smooth Scroll
+    // 6. Smart Location Detection
+    const autoFillBtn = document.getElementById('autoFillBtn');
+    const locationLoader = document.getElementById('locationLoader');
+    const startLocInput = document.getElementById('startLoc');
+    const endLocInput = document.getElementById('endLoc');
+    const airportList = document.getElementById('airportList');
+    const mapContainer = document.getElementById('mapContainer');
+    let map = null;
+
+    if (autoFillBtn) {
+        autoFillBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser");
+                return;
+            }
+
+            locationLoader.style.display = 'block';
+            autoFillBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                try {
+                    // 1. Detect University (Reverse Geocoding)
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16`);
+                    const geoData = await geoRes.json();
+                    
+                    // Filter for university name
+                    const uniName = geoData.address.university || geoData.address.college || geoData.display_name.split(',')[0];
+                    startLocInput.value = uniName;
+
+                    // 2. Find Nearest Airports (Overpass API)
+                    // Search for aerodromes within 50km
+                    const overpassQuery = `
+                        [out:json];
+                        node["aeroway"="aerodrome"](around:50000, ${latitude}, ${longitude});
+                        out;
+                    `;
+                    const ovRes = await fetch('https://overpass-api.de/api/interpreter', {
+                        method: 'POST',
+                        body: overpassQuery
+                    });
+                    const ovData = await ovRes.json();
+                    
+                    airportList.innerHTML = '';
+                    const airports = ovData.elements.map(el => el.tags.name).filter(n => n);
+                    
+                    airports.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        airportList.appendChild(option);
+                    });
+
+                    if (airports.length > 0) {
+                        endLocInput.value = airports[0]; // Pre-fill with the closest
+                    }
+
+                    // 3. Show Map Preview
+                    mapContainer.style.display = 'block';
+                    if (!map) {
+                        map = L.map('map').setView([latitude, longitude], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    } else {
+                        map.setView([latitude, longitude], 15);
+                    }
+                    L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup(`Detected Campus: ${uniName}`)
+                        .openPopup();
+
+                    locationLoader.style.display = 'none';
+                    autoFillBtn.disabled = false;
+                    
+                } catch (err) {
+                    console.error("Location error:", err);
+                    locationLoader.textContent = "Unable to auto-detect. Please enter manually.";
+                    setTimeout(() => locationLoader.style.display = 'none', 3000);
+                }
+            }, () => {
+                locationLoader.textContent = "Location access denied.";
+                autoFillBtn.disabled = false;
+                setTimeout(() => locationLoader.style.display = 'none', 3000);
+            });
+        });
+    }
+
+    // 7. Smooth Scroll
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
@@ -173,5 +258,6 @@ style.textContent = `
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    .btn-micro:hover { color: #fff !important; }
 `;
 document.head.appendChild(style);

@@ -14,6 +14,9 @@
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Leaflet Maps CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="bg-overlay"></div>
@@ -27,18 +30,18 @@
             </a>
             <div class="nav-links">
                 <a href="#features">Features</a>
-                <a href="#booking">Book Now</a>
+                <a href="#ride-feed">Feed</a>
                 <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" class="github-link">
-                    <i class="fa-brands fa-github"></i> Repository
+                    <i class="fa-brands fa-github"></i> Repo
                 </a>
             </div>
-            <a href="#booking" class="btn btn-secondary">Get Started</a>
+            <a href="#post-ride" class="btn btn-secondary">Post Ride</a>
         </nav>
 
         <header class="hero">
             <div class="hero-content">
                 <h1>Campus Connect, <span style="color: var(--primary);">Synchronized.</span></h1>
-                <p>The exclusive ride-sharing network for students. Save on fares, meet peers, and get to your destination safely. Just your university, your rides.</p>
+                <p>The exclusive ride-sharing network for students. Detect your campus, sync with peers, and find the nearest airport instantly.</p>
                 <div class="hero-btns" style="display: flex; gap: 1rem;">
                     <a href="#post-ride" class="btn btn-primary">Post a Ride</a>
                     <a href="#ride-feed" class="btn btn-secondary">Find a Ride</a>
@@ -51,8 +54,11 @@
 
         <!-- New: Post a Ride Form -->
         <section id="post-ride" class="booking-section">
-            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Share Your Journey</h2>
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Post Your Journey</h2>
             <div class="booking-card">
+                <div id="locationLoader" style="display: none; padding: 1rem; color: var(--primary); font-size: 0.8rem;">
+                    <i class="fa-solid fa-satellite-dish fa-fade"></i> Locating your campus...
+                </div>
                 <form class="booking-form" id="postingForm">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                         <div class="input-group">
@@ -64,22 +70,39 @@
                             <input type="time" id="departureTime" required>
                         </div>
                     </div>
+                    
                     <div class="input-group">
-                        <label for="startLoc">Current Location</label>
-                        <input type="text" id="startLoc" placeholder="Campus, Dorm, or Street" required>
+                        <label for="startLoc" style="display: flex; justify-content: space-between; align-items: center;">
+                            Current Location
+                            <button type="button" id="autoFillBtn" class="btn-micro" style="color: var(--primary); font-size: 0.7rem; cursor: pointer; background: none; border: none;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Smart Detect
+                            </button>
+                        </label>
+                        <input type="text" id="startLoc" placeholder="e.g. Stanford University" required>
                     </div>
+
                     <div class="input-group">
                         <label for="endLoc">Destination</label>
-                        <input type="text" id="endLoc" placeholder="Where are you going?" required>
+                        <input type="text" id="endLoc" list="airportList" placeholder="e.g. SFO Airport" required>
+                        <datalist id="airportList">
+                            <!-- Populated dynamically -->
+                        </datalist>
                     </div>
+
                     <div class="input-group">
                         <label for="baseFare">Estimated Total Trip Fare ($)</label>
-                        <input type="number" id="baseFare" placeholder="e.g. 45.00" min="0" step="0.01" required>
+                        <input type="number" id="baseFare" placeholder="e.g. 45.00" min="0" step="1" required>
                     </div>
+                    
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
                         <i class="fa-solid fa-plus"></i> Create Posting
                     </button>
                 </form>
+            </div>
+            
+            <!-- Map Preview (Hidden by default, shown after smart detect) -->
+            <div id="mapContainer" style="display: none; height: 300px; width: 100%; max-width: 600px; margin: 2rem auto; border-radius: 24px; border: 1px solid var(--border); overflow: hidden;">
+                <div id="map" style="height: 100%; width: 100%;"></div>
             </div>
         </section>
 
@@ -103,9 +126,9 @@
 
         <section id="features" class="features">
             <div class="feature-card">
-                <i class="fa-solid fa-user-graduate"></i>
-                <h3>Verified Students</h3>
-                <p>Exclusive access for university members. Secure, trusted, and community-driven.</p>
+                <i class="fa-solid fa-location-dot"></i>
+                <h3>Smart Auto-Fill</h3>
+                <p>One-tap destination matching. Detects your campus and locates the nearest airports automatically.</p>
             </div>
             <div class="feature-card">
                 <i class="fa-solid fa-calculator"></i>
@@ -113,12 +136,12 @@
                 <p>Fare splitting calculated instantly. The more students join, the less you pay.</p>
             </div>
             <div class="feature-card">
-                <i class="fa-solid fa-leaf"></i>
-                <h3>Eco-Friendly</h3>
-                <p>Reduce carbon emissions and campus congestion by syncing your travel together.</p>
+                <i class="fa-solid fa-user-graduate"></i>
+                <h3>Verified Students</h3>
+                <p>Exclusive access for university members. Secure, trusted, and community-driven.</p>
             </div>
         </section>
-
+        
     <!-- Footer -->
     <footer>
         <div class="logo" style="font-size: 1rem;">
@@ -134,6 +157,9 @@
         </div>
     </footer>
 
+    <!-- Leaflet Maps JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <!-- Firebase Integration -->
     <script type="module" src="main.js"></script>
 </body>
