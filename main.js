@@ -95,14 +95,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 🚀 2. Finalize University Selection
+    const manualSearchInput = document.getElementById('manualUniSearch');
+    const uniSuggestions = document.getElementById('uni-suggestions');
+
+    // Live University Search (Regulated Selection)
+    let searchTimeout = null;
+    manualSearchInput.addEventListener('input', () => {
+        const val = manualSearchInput.value;
+        if (val.length < 3) return;
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`http://universities.hipo.co/search?name=${encodeURIComponent(val)}`);
+                const data = await res.json();
+                
+                uniSuggestions.innerHTML = '';
+                data.slice(0, 10).forEach(uni => {
+                    const opt = document.createElement('option');
+                    opt.value = uni.name;
+                    uniSuggestions.appendChild(opt);
+                });
+            } catch (e) { console.warn("Uni search fail:", e); }
+        }, 500);
+    });
+
     document.getElementById('confirm-uni-btn').addEventListener('click', enterPortal);
     document.getElementById('search-uni-btn').addEventListener('click', () => {
-        const manualName = document.getElementById('manualUniSearch').value;
+        const manualName = manualSearchInput.value;
         if (manualName) {
             currentUniversity = manualName;
             enterPortal();
         }
     });
+
     document.getElementById('change-uni-btn').addEventListener('click', () => {
         document.getElementById('detected-campus-info').style.display = 'none';
         document.getElementById('manual-search-view').style.display = 'block';
@@ -113,23 +139,28 @@ document.addEventListener('DOMContentLoaded', () => {
         mainApp.style.display = 'block';
         uniBadge.textContent = `📍 ${currentUniversity}`;
         
-        // Load Real-Time Data specifically for this University
+        // Load Real-Time Data (Using a more robust client-side filter to avoid Indexing Errors)
         syncRidesForUniversity();
     }
 
-    // 📋 3. Sync Rides (Coud + University Filter)
+    // 📋 3. Sync Rides (Cloud + Robust Filter)
     function syncRidesForUniversity() {
         const ridesRef = collection(db, "rides");
-        // Only show rides that belong to this university
-        const q = query(
-            ridesRef, 
-            where("university", "==", currentUniversity),
-            orderBy("createdAt", "desc")
-        );
+        
+        // 🔥 Switch to a simpler query that doesn't REQUIRE the user to create 
+        // manual indexes in the Firebase Console (Fixes "nothing appears" bug!)
+        const q = query(ridesRef, orderBy("createdAt", "desc"));
 
         onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderRides(data);
+            const allRides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Client-side filtering ensures it works even without a Firebase Index!
+            const filteredRides = allRides.filter(ride => ride.university === currentUniversity);
+            
+            renderRides(filteredRides);
+        }, (error) => {
+            console.error("Firebase sync error:", error);
+            alert("Database Error! Make sure you initialized Firestore in your console.");
         });
     }
 
