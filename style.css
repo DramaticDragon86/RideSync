@@ -151,7 +151,147 @@ nav {
   margin-bottom: 1.5rem;
   background: linear-gradient(to right, #fff, #888);
   -webkit-background-clip: text;
+  background-clip: text; /* Fixed lint error */
   -webkit-text-fill-color: transparent;
+}
+
+/* Ride Card Styling */
+.ride-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2rem;
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.ride-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.student-info h4 {
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.student-info span {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.ride-time {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--primary);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ride-route {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.ride-route::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--border);
+}
+
+.route-point {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  position: relative;
+}
+
+.route-point::after {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 50%;
+}
+
+.route-point.destination::after {
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.fare-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.split-stats {
+  text-align: left;
+}
+
+.split-stats label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: block;
+}
+
+.split-stats .amount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.riders-count {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.join-btn {
+  background: var(--primary);
+  color: var(--bg-dark);
+  border: none;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.join-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.join-btn.full {
+  background: var(--border);
+  color: var(--text-dim);
+  cursor: not-allowed;
 }
 
 .hero-content p {

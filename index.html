@@ -37,63 +37,85 @@
 
         <header class="hero">
             <div class="hero-content">
-                <h1>Seamless Movement, Defined.</h1>
-                <p>Experience the next generation of transportation. RideSync connects you to your destination with precision, speed, and absolute comfort.</p>
+                <h1>Campus Connect, <span style="color: var(--primary);">Synchronized.</span></h1>
+                <p>The exclusive ride-sharing network for students. Save on fares, meet peers, and get to your destination safely. Just your university, your rides.</p>
                 <div class="hero-btns" style="display: flex; gap: 1rem;">
-                    <a href="#booking" class="btn btn-primary">Book Your First Ride</a>
-                    <a href="https://github.com/DramaticDragon86/RideSync" target="_blank" class="btn btn-secondary">
-                        <i class="fa-brands fa-github"></i> View Source
-                    </a>
+                    <a href="#post-ride" class="btn btn-primary">Post a Ride</a>
+                    <a href="#ride-feed" class="btn btn-secondary">Find a Ride</a>
                 </div>
             </div>
             <div class="hero-image">
-                <img src="assets/hero.png" alt="Futuristic RideSync Car">
+                <img src="assets/hero.png" alt="Student Transportation illustration">
             </div>
         </header>
 
-        <section id="features" class="features">
-            <div class="feature-card">
-                <i class="fa-solid fa-bolt-lightning"></i>
-                <h3>Instant Sync</h3>
-                <p>Connect your calendar and let RideSync handle the logistics. Your ride is ready when you are.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fa-solid fa-shield-halved"></i>
-                <h3>Precision Safety</h3>
-                <p>Advanced telemetry and AI monitoring ensure every journey is as secure as it is smooth.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fa-solid fa-earth-americas"></i>
-                <h3>Global Range</h3>
-                <p>Available in major cities worldwide, providing the same premium experience across borders.</p>
+        <!-- New: Post a Ride Form -->
+        <section id="post-ride" class="booking-section">
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Share Your Journey</h2>
+            <div class="booking-card">
+                <form class="booking-form" id="postingForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="input-group">
+                            <label for="studentName">Student Name</label>
+                            <input type="text" id="studentName" placeholder="Full Name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="departureTime">Departure Time</label>
+                            <input type="time" id="departureTime" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="startLoc">Current Location</label>
+                        <input type="text" id="startLoc" placeholder="Campus, Dorm, or Street" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="endLoc">Destination</label>
+                        <input type="text" id="endLoc" placeholder="Where are you going?" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="baseFare">Estimated Total Trip Fare ($)</label>
+                        <input type="number" id="baseFare" placeholder="e.g. 45.00" min="0" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        <i class="fa-solid fa-plus"></i> Create Posting
+                    </button>
+                </form>
             </div>
         </section>
 
-        <section id="booking" class="booking-section">
-            <h2 style="font-size: 2.5rem; margin-bottom: 3rem;">Ready to Sync?</h2>
-            <div class="booking-card">
-                <form class="booking-form" id="bookingForm">
-                    <div class="input-group">
-                        <label for="pickup">Pickup Location</label>
-                        <input type="text" id="pickup" placeholder="Where are you?" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="destination">Destination</label>
-                        <input type="text" id="destination" placeholder="Where are we going?" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="time">Time</label>
-                        <input type="time" id="time" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; border: none; cursor: pointer;">
-                        Reserve Ride
-                    </button>
-                </form>
-                <div id="bookingSuccess" style="display: none; padding: 2rem; color: var(--primary);">
-                    <i class="fa-solid fa-circle-check" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                    <h3>Ride Synced!</h3>
-                    <p style="margin-top: 0.5rem;">Your driver will arrive at the scheduled time.</p>
+        <!-- New: Live Ride Feed -->
+        <section id="ride-feed" class="feed-section" style="padding: 6rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
+                <h2 style="font-size: 2.5rem;">Live Postings</h2>
+                <div id="activeCounter" style="color: var(--text-dim); font-size: 0.9rem;">
+                    Showing <span id="rideCount" style="color: var(--primary); font-weight: bold;">0</span> shared rides
                 </div>
+            </div>
+            
+            <div id="ridesGrid" class="features" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));">
+                <!-- Rides will be dynamically injected here -->
+                <div id="noRides" style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 4rem;">
+                    <i class="fa-solid fa-car-side" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>No active postings. Be the first to share your trip!</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="feature-card">
+                <i class="fa-solid fa-user-graduate"></i>
+                <h3>Verified Students</h3>
+                <p>Exclusive access for university members. Secure, trusted, and community-driven.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-calculator"></i>
+                <h3>Smart Split</h3>
+                <p>Fare splitting calculated instantly. The more students join, the less you pay.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-leaf"></i>
+                <h3>Eco-Friendly</h3>
+                <p>Reduce carbon emissions and campus congestion by syncing your travel together.</p>
             </div>
         </section>
 

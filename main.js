@@ -1,75 +1,142 @@
-// RideSync - Logic and Interactivity
-
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Smooth Scrolling for Navigation
-    const navLinks = document.querySelectorAll('a[href^="#"]');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetId = link.getAttribute('href');
-            if (targetId === '#') return;
+    // 1. Data Store (Simulated)
+    let rides = [
+        {
+            id: 1,
+            name: "Alex Johnson",
+            start: "University Library",
+            end: "Union Station",
+            time: "18:30",
+            baseFare: 45.00,
+            riders: 1 
+        },
+        {
+            id: 2,
+            name: "Sarah Chen",
+            start: "Engineering Quad",
+            end: "SFO Airport",
+            time: "05:00",
+            baseFare: 60.00,
+            riders: 2
+        }
+    ];
+
+    const ridesGrid = document.getElementById('ridesGrid');
+    const rideCountEl = document.getElementById('rideCount');
+    const postingForm = document.getElementById('postingForm');
+    const noRides = document.getElementById('noRides');
+
+    // 2. Render Rides
+    function renderRides() {
+        if (rides.length === 0) {
+            noRides.style.display = 'block';
+        } else {
+            noRides.style.display = 'none';
+        }
+
+        ridesGrid.innerHTML = '';
+        if (rides.length > 0) ridesGrid.appendChild(noRides); // Keep reference but hide
+
+        rides.forEach(ride => {
+            const splitFare = (ride.baseFare / ride.riders).toFixed(2);
             
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
+            const card = document.createElement('div');
+            card.className = 'ride-card';
+            card.innerHTML = `
+                <div class="ride-header">
+                    <div class="student-info">
+                        <h4>${ride.name}</h4>
+                        <span>University Student</span>
+                    </div>
+                    <div class="ride-time"><i class="fa-regular fa-clock"></i> ${ride.time}</div>
+                </div>
+                
+                <div class="ride-route">
+                    <div class="route-point">From: <strong>${ride.start}</strong></div>
+                    <div class="route-point destination">To: <strong>${ride.end}</strong></div>
+                </div>
+
+                <div class="fare-box">
+                    <div class="split-stats">
+                        <label>Your Split Estimate</label>
+                        <div class="amount">$${splitFare}</div>
+                        <div class="riders-count">${ride.riders} ${ride.riders === 1 ? 'Person' : 'People'} synced</div>
+                    </div>
+                    <button class="join-btn ${ride.riders >= 4 ? 'full' : ''}" onclick="window.joinRide(${ride.id})">
+                        ${ride.riders >= 4 ? 'Full' : '<i class="fa-solid fa-plus"></i> Join'}
+                    </button>
+                </div>
+            `;
+            ridesGrid.appendChild(card);
+        });
+
+        rideCountEl.textContent = rides.length;
+    }
+
+    // 3. Post New Ride
+    if (postingForm) {
+        postingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newRide = {
+                id: Date.now(),
+                name: document.getElementById('studentName').value,
+                start: document.getElementById('startLoc').value,
+                end: document.getElementById('endLoc').value,
+                time: document.getElementById('departureTime').value,
+                baseFare: parseFloat(document.getElementById('baseFare').value),
+                riders: 1
+            };
+
+            rides.unshift(newRide);
+            renderRides();
+            postingForm.reset();
+            
+            // Success feedback
+            const btn = postingForm.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Posted Successfully!';
+            btn.style.background = '#00ff88';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
                 window.scrollTo({
-                    top: targetElement.offsetTop - 80, // Offset for navbar
+                    top: document.getElementById('ride-feed').offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }, 1500);
+        });
+    }
+
+    // 4. Join Ride Logic (Exposed Globally)
+    window.joinRide = (id) => {
+        const ride = rides.find(r => r.id === id);
+        if (ride && ride.riders < 4) {
+            ride.riders++;
+            renderRides();
+            
+            // Subtle toast or feedback could be added here
+        } else if (ride && ride.riders >= 4) {
+            alert("This ride is currently full!");
+        }
+    };
+
+    // Initial Render
+    renderRides();
+
+    // 5. Smooth Scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                window.scrollTo({
+                    top: target.offsetTop - 80,
                     behavior: 'smooth'
                 });
             }
         });
-    });
-
-    // 2. Form Handling
-    const bookingForm = document.getElementById('bookingForm');
-    const bookingSuccess = document.getElementById('bookingSuccess');
-
-    if (bookingForm) {
-        bookingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Mock success animation
-            bookingForm.style.opacity = '0';
-            bookingForm.style.transform = 'translateY(-20px)';
-            bookingForm.style.transition = 'all 0.6s ease';
-            
-            setTimeout(() => {
-                bookingForm.style.display = 'none';
-                bookingSuccess.style.display = 'block';
-                bookingSuccess.style.animation = 'fadeIn 0.8s ease forwards';
-            }, 600);
-        });
-    }
-
-    // 3. Simple Parallax for Hero Image
-    const heroImage = document.querySelector('.hero-image img');
-    window.addEventListener('scroll', () => {
-        const scrolled = window.scrollY;
-        if (heroImage) {
-            heroImage.style.transform = `translateY(${scrolled * 0.1}px) scale(${1 + scrolled * 0.0001})`;
-        }
-    });
-
-    // 4. Reveal on Scroll
-    const featureCards = document.querySelectorAll('.feature-card');
-    const observerOptions = {
-        threshold: 0.1
-    };
-
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    featureCards.forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        card.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
-        revealObserver.observe(card);
     });
 });
 
