@@ -422,8 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         passengerPhones: arrayUnion(currentUserData.phone || 'N/A')
                     });
                     
-                    // Alert the user
-                    sendMockSMS(`RideSync: Match Found! You've joined ${matchedRide.passengerNames[0]}'s carpool. Their phone is ${matchedRide.passengerPhones[0]}.`);
+                    // Alert the user via Email (and local popup)
+                    sendEmailAlert(`Match Found! You've joined ${matchedRide.passengerNames[0]}'s carpool. Their phone is ${matchedRide.passengerPhones[0]}.`, userUid);
                 } else {
                     // Create new request since no match was found
                     const payload = {
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: Date.now()
                     };
                     await addDoc(ridesRef, payload);
-                    sendMockSMS("RideSync: Request created successfully. We'll text you as soon as someone matches with you!");
+                    sendEmailAlert("Request created successfully! We will email you as soon as someone matches with you.", userUid);
                 }
 
                 postingForm.reset();
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ride.currentRiders <= 1) {
                     // You are the last person, delete the entire ride
                     await deleteDoc(rideRef);
-                    sendMockSMS("RideSync: Your carpool has been successfully canceled and removed.");
+                    sendEmailAlert("Your carpool request has been successfully canceled and removed.", userUid);
                 } else {
                     // Remove yourself from the group
                     await updateDoc(rideRef, {
@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         passengerNames: arrayRemove(userName),
                         passengerPhones: arrayRemove(userPhone)
                     });
-                    sendMockSMS("RideSync: You have successfully left the carpool group.");
+                    sendEmailAlert("You have successfully left the carpool group.", userUid);
                 }
             }
         } catch (err) {
@@ -492,19 +492,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 📱 Mock SMS Utility
-    function sendMockSMS(message) {
-        const phoneBox = document.getElementById('mock-phone-alert');
+    // 📧 Email System integration 
+    // Uses EmailJS - replacing SMS logic
+    function sendEmailAlert(message, uid) {
+        // 1. Show the visually pleasing mock popup
+        const alertBox = document.getElementById('mock-phone-alert');
         const textElem = document.getElementById('mock-sms-text');
-        if(!phoneBox) return;
         
-        textElem.textContent = message;
-        // Slide up
-        phoneBox.style.bottom = '20px';
+        if(alertBox && textElem) {
+            textElem.textContent = message;
+            alertBox.style.bottom = '20px';
+            setTimeout(() => { alertBox.style.bottom = '-150px'; }, 6000);
+        }
+
+        // 2. Transmit Actual Email via EmailJS
+        // To enable: Go to https://www.emailjs.com, create free account, plug in keys
+        const USE_REAL_EMAIL = false; // Set to true when keys are plugged in
         
-        // Hide after 6 seconds
-        setTimeout(() => {
-            phoneBox.style.bottom = '-150px';
-        }, 6000);
+        if (USE_REAL_EMAIL && typeof emailjs !== 'undefined') {
+            const serviceID = "YOUR_SERVICE_ID";
+            const templateID = "YOUR_TEMPLATE_ID";
+            const publicKey = "YOUR_PUBLIC_KEY";
+
+            // Assuming user is logged in and we have their auth email
+            const userEmail = auth.currentUser ? auth.currentUser.email : "user@edu.com";
+
+            emailjs.send(serviceID, templateID, {
+                to_email: userEmail,
+                subject: "RideSync Notification",
+                message: message
+            }, publicKey)
+            .then(() => console.log("Physical email successfully pushed to: " + userEmail))
+            .catch(err => console.error("EmailJS Error:", err));
+        } else {
+            console.log("Mock Email queued for delivery: " + message);
+        }
     }
 });
