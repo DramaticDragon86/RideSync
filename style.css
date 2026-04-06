@@ -3,7 +3,7 @@
  * A hand-drawn, artisanal aesthetic for the university community
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;700&family=Indie+Flower&display=swap');
+@import url('https://fonts.cdnfonts.com/css/open-sauce-one');
 
 :root {
   --paper-bg: #f8f6f0; /* Off-white notebook color */
@@ -12,8 +12,8 @@
   --pen-blue: #2a5298;
   --crayon-red: #ff4757;
   --border-radius-sketchy: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  --font-hand: 'Architects Daughter', cursive;
-  --font-accent: 'Caveat', cursive;
+  --font-hand: 'Open Sauce One', sans-serif;
+  --font-accent: 'Open Sauce One', sans-serif;
   --transition: all 0.2s ease-in-out;
 }
 
