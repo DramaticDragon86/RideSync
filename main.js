@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentUserData = userDoc.data();
                     document.getElementById('studentName').value = currentUserData.name;
                     currentUniversity = currentUserData.school;
+                    document.getElementById('currentUniBadge').textContent = currentUniversity;
+                    const welcomeTitle = document.getElementById('main-welcome-title');
+                    if (welcomeTitle) welcomeTitle.textContent = `Welcome to RideSync ${currentUniversity}!`;
+                    document.getElementById('verify-school-name').textContent = currentUniversity;
                     verifyLocationOnCampus();
                 } else {
                     console.error("No user data found in Firestore");
