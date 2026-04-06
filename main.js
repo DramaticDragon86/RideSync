@@ -248,14 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
             defaultAirports.forEach(name => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn btn-secondary';
+                btn.className = 'btn';
                 btn.style.padding = '5px 10px';
                 btn.style.fontSize = '0.9rem';
                 btn.style.marginRight = '0.5rem';
+                btn.style.borderWidth = '2px';
                 btn.textContent = name;
                 btn.onclick = () => {
-                    Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
-                    btn.style.backgroundColor = '#f0f0f0';
+                    Array.from(quickContainer.children).forEach(c => {
+                        c.style.backgroundColor = 'transparent';
+                        c.style.color = 'var(--pencil)';
+                    });
+                    btn.style.backgroundColor = 'var(--pen-blue)';
+                    btn.style.color = 'white';
                     endLocInput.value = name;
                     endLocInput.style.display = 'none';
                 };
@@ -268,10 +273,15 @@ document.addEventListener('DOMContentLoaded', () => {
             otherBtn.className = 'btn';
             otherBtn.style.padding = '5px 10px';
             otherBtn.style.fontSize = '0.9rem';
+            otherBtn.style.borderWidth = '2px';
             otherBtn.textContent = 'Other';
             otherBtn.onclick = () => {
-                Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
-                otherBtn.style.backgroundColor = '#f0f0f0';
+                Array.from(quickContainer.children).forEach(c => {
+                    c.style.backgroundColor = 'transparent';
+                    c.style.color = 'var(--pencil)';
+                });
+                otherBtn.style.backgroundColor = 'var(--pen-blue)';
+                otherBtn.style.color = 'white';
                 endLocInput.value = '';
                 endLocInput.style.display = 'block';
             };
@@ -290,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function enterPortal() {
         verificationPage.style.display = 'none';
         mainApp.style.display = 'block';
-        uniBadge.textContent = `📍 verified at ${currentUniversity}`;
+        uniBadge.textContent = `📍 Verified at ${currentUniversity}`;
 
         getAirportsForUniversity(currentUniversity);
         syncRidesForUniversity();
@@ -368,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxRidersInput = document.getElementById('maxRiders');
 
         if (riderBtns.length > 0) {
-            maxRidersInput.value = "2"; 
+            maxRidersInput.value = "2";
             riderBtns[0].style.backgroundColor = 'var(--pen-blue)';
             riderBtns[0].style.color = 'white';
 
@@ -378,10 +388,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         b.style.backgroundColor = 'transparent';
                         b.style.color = 'var(--pencil)';
                     });
-                    
+
                     btn.style.backgroundColor = 'var(--pen-blue)';
                     btn.style.color = 'white';
-                    
+
                     if (btn.dataset.val === 'other') {
                         maxRidersInput.style.display = 'block';
                         maxRidersInput.value = "";
@@ -390,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         maxRidersInput.style.display = 'none';
                         maxRidersInput.value = btn.dataset.val;
-                        maxRidersInput.required = false; 
+                        maxRidersInput.required = false;
                     }
                 });
             });
