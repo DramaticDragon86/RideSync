@@ -1,20 +1,20 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where, setDoc, getDoc, getDocs, arrayUnion, arrayRemove, deleteDoc 
+import {
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, increment, where, setDoc, getDoc, getDocs, arrayUnion, arrayRemove, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { 
-    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut 
+import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- START: FIREBASE CONFIGURATION ---
 const firebaseConfig = {
-  apiKey: "AIzaSyBlf4nxd3lwSOcRaIkSXRDyfdWxmaiF4ko",
-  authDomain: "ridesync-48836.firebaseapp.com",
-  projectId: "ridesync-48836",
-  storageBucket: "ridesync-48836.firebasestorage.app",
-  messagingSenderId: "376915967476",
-  appId: "1:376915967476:web:75e1401ffe81f4d5af0da1",
-  measurementId: "G-SP3X8NEBWN"
+    apiKey: "AIzaSyBlf4nxd3lwSOcRaIkSXRDyfdWxmaiF4ko",
+    authDomain: "ridesync-48836.firebaseapp.com",
+    projectId: "ridesync-48836",
+    storageBucket: "ridesync-48836.firebasestorage.app",
+    messagingSenderId: "376915967476",
+    appId: "1:376915967476:web:75e1401ffe81f4d5af0da1",
+    measurementId: "G-SP3X8NEBWN"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const noRides = document.getElementById('noRides');
     const postingForm = document.getElementById('postingForm');
     const airportList = document.getElementById('airportList');
-    
+
     // State Tracking
     let currentUniversity = null;
     let currentUserData = null;
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("No user data found in Firestore");
                     signOut(auth);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Error fetching user data", e);
                 signOut(auth);
             }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         authError.style.display = 'none';
-        
+
         const email = document.getElementById('authEmail').value;
         const password = document.getElementById('authPassword').value;
 
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const school = document.getElementById('authSchool').value;
 
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                
+
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     name,
                     phone,
@@ -194,13 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16`);
                 const data = await res.json();
-                
+
                 const detectedSchool = data.address?.university || data.address?.college || data.display_name?.split(',')[0];
-                
+
                 // Extremely basic fuzzy matching: check if detected name shares at least one significant word with registered school
                 const registeredWords = currentUniversity.toLowerCase().split(' ').filter(w => w.length > 3);
                 const detectedWords = (detectedSchool || '').toLowerCase();
-                
+
                 const isMatch = registeredWords.some(word => detectedWords.includes(word));
 
                 if (isMatch || detectedSchool === currentUniversity) {
@@ -241,10 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultAirports = universityAirportsMap[uniName] || [];
         const quickContainer = document.getElementById('quick-airports');
         const endLocInput = document.getElementById('endLoc');
-        
+
         if (quickContainer) {
             quickContainer.innerHTML = ''; // Clear loader
-            
+
             defaultAirports.forEach(name => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 quickContainer.appendChild(btn);
             });
-            
+
             // Add Other button
             const otherBtn = document.createElement('button');
             otherBtn.type = 'button';
@@ -270,13 +270,13 @@ document.addEventListener('DOMContentLoaded', () => {
             otherBtn.style.fontSize = '0.9rem';
             otherBtn.textContent = 'Other';
             otherBtn.onclick = () => {
-               Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
-               otherBtn.style.backgroundColor = '#f0f0f0';
-               endLocInput.value = '';
-               endLocInput.style.display = 'block';
+                Array.from(quickContainer.children).forEach(c => c.style.backgroundColor = 'transparent');
+                otherBtn.style.backgroundColor = '#f0f0f0';
+                endLocInput.value = '';
+                endLocInput.style.display = 'block';
             };
             quickContainer.appendChild(otherBtn);
-            
+
             // Select first by default if exists
             if (defaultAirports.length > 0) {
                 quickContainer.children[0].click();
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         verificationPage.style.display = 'none';
         mainApp.style.display = 'block';
         uniBadge.textContent = `📍 verified at ${currentUniversity}`;
-        
+
         getAirportsForUniversity(currentUniversity);
         syncRidesForUniversity();
     }
@@ -299,22 +299,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 📋 3. Sync Rides (Cloud + Auto-Match View)
     function syncRidesForUniversity() {
         const ridesRef = collection(db, "rides");
-        
+
         // Only load rides that the current user is a passenger in
         const q = query(ridesRef, orderBy("createdAt", "desc"));
 
         onSnapshot(q, (snapshot) => {
             const allRides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
+
             // Client-side filtering ensures it works without complex indexing 
             // and filters out anything the user isn't assigned to.
             const userUid = auth.currentUser ? auth.currentUser.uid : null;
-            const myRides = allRides.filter(ride => 
-                ride.university === currentUniversity && 
-                ride.passengers && 
+            const myRides = allRides.filter(ride =>
+                ride.university === currentUniversity &&
+                ride.passengers &&
                 ride.passengers.includes(userUid)
             );
-            
+
             renderRides(myRides);
         }, (error) => {
             console.error("Firebase sync error:", error);
@@ -363,41 +363,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 📝 4. Find or Create Matching Listing
     if (postingForm) {
+        // Handle Max Rider Buttons
+        const riderBtns = document.querySelectorAll('.rider-btn');
+        const maxRidersInput = document.getElementById('maxRiders');
+
+        if (riderBtns.length > 0) {
+            maxRidersInput.value = "2"; 
+            riderBtns[0].style.backgroundColor = 'var(--pen-blue)';
+            riderBtns[0].style.color = 'white';
+
+            riderBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    riderBtns.forEach(b => {
+                        b.style.backgroundColor = 'transparent';
+                        b.style.color = 'var(--pencil)';
+                    });
+                    
+                    btn.style.backgroundColor = 'var(--pen-blue)';
+                    btn.style.color = 'white';
+                    
+                    if (btn.dataset.val === 'other') {
+                        maxRidersInput.style.display = 'block';
+                        maxRidersInput.value = "";
+                        maxRidersInput.focus();
+                        maxRidersInput.required = true;
+                    } else {
+                        maxRidersInput.style.display = 'none';
+                        maxRidersInput.value = btn.dataset.val;
+                        maxRidersInput.required = false; 
+                    }
+                });
+            });
+        }
+
         postingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const myName = document.getElementById('studentName').value;
             const endVal = document.getElementById('endLoc').value;
             const dateVal = document.getElementById('rideDate').value;
             const timeVal = document.getElementById('departureTime').value;
-            const maxRidersVal = parseInt(document.getElementById('maxRiders').value);
+            const maxRidersVal = parseInt(maxRidersInput.value) || 2;
             const userUid = auth.currentUser.uid;
-            
+
             try {
                 // AUTO MATCH LOGIC
                 const ridesRef = collection(db, "rides");
                 const q = query(ridesRef, orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
-                
+
                 let matchedRide = null;
-                
+
                 // Helper to convert HH:MM to minutes from midnight
                 const toMinutes = (tStr) => {
                     const parts = tStr.split(':');
                     return parseInt(parts[0]) * 60 + parseInt(parts[1]);
                 };
                 const myMins = toMinutes(timeVal);
-                
+
                 querySnapshot.forEach(docSnap => {
                     const ride = docSnap.data();
-                    
+
                     // Filter matching rides locally
                     const isSameUni = ride.university === currentUniversity;
                     const isSameEnd = ride.end === endVal;
                     const isSameDate = ride.date === dateVal;
                     const isNotFull = ride.currentRiders < ride.maxRiders;
                     const imNotAlreadyInit = !(ride.passengers || []).includes(userUid);
-                    
+
                     if (isSameUni && isSameEnd && isSameDate && isNotFull && imNotAlreadyInit) {
                         const rideMins = toMinutes(ride.time);
                         // Within 30 minutes?
@@ -411,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 });
-                
+
                 if (matchedRide) {
                     // Update existing document!
                     const matchRef = doc(db, "rides", matchedRide.id);
@@ -421,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         passengerNames: arrayUnion(myName),
                         passengerPhones: arrayUnion(currentUserData.phone || 'N/A')
                     });
-                    
+
                     // Alert the user via Email (and local popup)
                     sendEmailAlert(`Match Found! You've joined ${matchedRide.passengerNames[0]}'s carpool. Their phone is ${matchedRide.passengerPhones[0]}.`, userUid);
                 } else {
@@ -443,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 postingForm.reset();
-                
+
                 const quickAirports = document.getElementById('quick-airports');
                 if (quickAirports && quickAirports.children.length > 0 && quickAirports.children[0].tagName === 'BUTTON') {
                     quickAirports.children[0].click();
@@ -460,17 +493,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🚪 5. Leave / Delete Logic
     window.leaveRide = async (id) => {
         if (!confirm("Are you sure you want to leave this carpool?")) return;
-        
+
         try {
             const rideRef = doc(db, "rides", id);
             const rideSnap = await getDoc(rideRef);
-            
+
             if (rideSnap.exists()) {
                 const ride = rideSnap.data();
                 const userUid = auth.currentUser.uid;
                 const userName = document.getElementById('studentName').value || currentUserData.name;
                 const userPhone = currentUserData.phone || 'N/A';
-                
+
                 if (ride.currentRiders <= 1) {
                     // You are the last person, delete the entire ride
                     await deleteDoc(rideRef);
@@ -498,8 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Show the visually pleasing mock popup
         const alertBox = document.getElementById('mock-phone-alert');
         const textElem = document.getElementById('mock-sms-text');
-        
-        if(alertBox && textElem) {
+
+        if (alertBox && textElem) {
             textElem.textContent = message;
             alertBox.style.bottom = '20px';
             setTimeout(() => { alertBox.style.bottom = '-150px'; }, 6000);
@@ -508,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Transmit Actual Email via EmailJS
         // To enable: Go to https://www.emailjs.com, create free account, plug in keys
         const USE_REAL_EMAIL = false; // Set to true when keys are plugged in
-        
+
         if (USE_REAL_EMAIL && typeof emailjs !== 'undefined') {
             const serviceID = "YOUR_SERVICE_ID";
             const templateID = "YOUR_TEMPLATE_ID";
@@ -522,8 +555,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 subject: "RideSync Notification",
                 message: message
             }, publicKey)
-            .then(() => console.log("Physical email successfully pushed to: " + userEmail))
-            .catch(err => console.error("EmailJS Error:", err));
+                .then(() => console.log("Physical email successfully pushed to: " + userEmail))
+                .catch(err => console.error("EmailJS Error:", err));
         } else {
             console.log("Mock Email queued for delivery: " + message);
         }
