@@ -95,8 +95,7 @@ nav {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
-  margin-bottom: 3rem;
-  border-bottom: 2px dashed var(--pencil);
+  margin-bottom: 1rem;
 }
 
 .logo {
