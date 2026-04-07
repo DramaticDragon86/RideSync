@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('studentName').value = currentUserData.name;
                     currentUniversity = currentUserData.school;
                     const uniColor = universityColorsMap[currentUniversity] || 'var(--pencil)';
-                    document.getElementById('main-welcome-title').innerHTML = `Welcome to RideSync <span style="color: ${uniColor}">${currentUniversity}</span>!`;
+                    document.getElementById('main-welcome-title').innerHTML = `Welcome to RideSync <br> <span style="color: ${uniColor}">${currentUniversity}</span>!`;
                     verifyLocationOnCampus();
                 } else {
                     console.error("No user data found in Firestore");
