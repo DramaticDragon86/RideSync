@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentUserData = userDoc.data();
                     document.getElementById('studentName').value = currentUserData.name;
                     currentUniversity = currentUserData.school;
-                    document.getElementById('main-welcome-title').textContent = `Welcome to RideSync ${currentUniversity}!`;
+                    const uniColor = universityColorsMap[currentUniversity] || 'var(--pencil)';
+                    document.getElementById('main-welcome-title').innerHTML = `Welcome to RideSync <span style="color: ${uniColor}">${currentUniversity}</span>!`;
                     verifyLocationOnCampus();
                 } else {
                     console.error("No user data found in Firestore");
@@ -236,6 +237,24 @@ document.addEventListener('DOMContentLoaded', () => {
         "New York University": ["JFK Intl", "LaGuardia (LGA)", "Newark Liberty (EWR)"],
         "Columbia University": ["JFK Intl", "LaGuardia (LGA)", "Newark Liberty (EWR)"]
         // Additional schools can be hardcoded here
+    };
+
+    const universityColorsMap = {
+        "Northwestern University": "#4E2A84", // Purple
+        "University of California, Berkeley": "#003262", // Blue
+        "Stanford University": "#8C1515", // Cardinal Red
+        "University of Southern California": "#990000", // Cardinal
+        "University of California, Los Angeles": "#2D68C4", // Blue
+        "New York University": "#57068C", // Violet
+        "Columbia University": "#B9D9EB", // Sky Blue
+        "Yale University": "#00356B", // Blue
+        "Harvard University": "#A51C30", // Crimson
+        "Princeton University": "#FF6000", // Orange
+        "Massachusetts Institute of Technology": "#A31F34", // Cardinal
+        "University of Pennsylvania": "#003366", // Blue
+        "Cornell University": "#B31B1B", // Red
+        "Brown University": "#4E3629", // Brown
+        "Dartmouth College": "#00693E" // Green
     };
 
     function getAirportsForUniversity(uniName) {
