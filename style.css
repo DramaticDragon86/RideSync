@@ -139,6 +139,20 @@ nav {
   color: var(--crayon-red);
 }
 
+.btn-logout {
+  padding: 5px 15px;
+  font-size: 0.85rem;
+  color: var(--crayon-red);
+  border-color: var(--crayon-red);
+  border-width: 2px;
+  background: white;
+}
+
+.btn-logout:hover {
+  background: var(--crayon-red);
+  color: white;
+}
+
 /* Cards (Ride Data) */
 .ride-card {
   padding: 1.5rem;
